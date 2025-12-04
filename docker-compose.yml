@@ -1,14 +1,16 @@
 services:
   client:
     build:
-      context: ./client
+      context: .      # racine
+      dockerfile: client/Dockerfile
     container_name: client-app
     ports:
       - "5173:80"
 
   dashboard:
     build:
-      context: ./dashboard
+      context: .
+      dockerfile: dashboard/Dockerfile
     container_name: dashboard-app
     ports:
       - "5174:80"

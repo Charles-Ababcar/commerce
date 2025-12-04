@@ -1,20 +1,10 @@
-# Étape 1 : build
 FROM node:20-alpine AS build
 WORKDIR /app
-COPY package*.json ./
+COPY client/package*.json ./
 RUN npm install
-COPY . .
+COPY client/. .
 RUN npm run build
 
-# Étape 2 : serveur Nginx
 FROM nginx:1.25-alpine
-
-# Copier le build
 COPY --from=build /app/dist /usr/share/nginx/html/client
-
-# Copier la config Nginx depuis la racine du projet
-COPY default.conf /etc/nginx/conf.d/default.conf
-
-
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+COPY nginx/default.conf /etc/nginx/conf.d/default.conf
