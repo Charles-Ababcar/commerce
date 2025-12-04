@@ -10,7 +10,7 @@ services:
   dashboard:
     build:
       context: .
-      dockerfile: ./dashboard
+      dockerfile: dashboard/Dockerfile
     container_name: dashboard-app
     ports:
       - "5174:80"
