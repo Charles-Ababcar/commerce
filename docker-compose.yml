@@ -1,7 +1,7 @@
 services:
   client:
     build:
-      context: .      # racine
+      context: .
       dockerfile: client/Dockerfile
     container_name: client-app
     ports:
