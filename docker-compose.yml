@@ -3,8 +3,6 @@ services:
     build:
       context: ./client
     container_name: client-app
-    ports:
-      - "5173:80"   # accéder au client sur http://localhost:5173
     volumes:
       - client-dist:/usr/share/nginx/html
 
@@ -12,10 +10,21 @@ services:
     build:
       context: ./dashboard
     container_name: dashboard-app
-    ports:
-      - "5174:80"   # accéder au dashboard sur http://localhost:5174
     volumes:
       - dashboard-dist:/usr/share/nginx/html
+
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: nginx-gateway
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - client-dist:/usr/share/nginx/html/client
+      - dashboard-dist:/usr/share/nginx/html/dashboard
+    depends_on:
+      - client
+      - dashboard
 
 volumes:
   client-dist:
