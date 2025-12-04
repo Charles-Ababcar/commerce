@@ -1,14 +1,14 @@
 services:
   client:
     build:
-      context: client/Dockerfile
+      context: ./client
     container_name: client-app
     ports:
       - "5173:80"
 
   dashboard:
     build:
-      context: dashboard/Dockerfile
+      context: ./dashboard
     container_name: dashboard-app
     ports:
       - "5174:80"
