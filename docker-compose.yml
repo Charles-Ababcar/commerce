@@ -1,4 +1,10 @@
 services:
+  backend:
+    image: apps-backend
+    container_name: spring_backend
+    ports:
+      - "8080:8080"
+
   client:
     build: ./client
     container_name: client-app
