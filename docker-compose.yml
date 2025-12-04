@@ -4,19 +4,11 @@ services:
       context: ./client
     container_name: client-app
     ports:
-      - "5173:80"   # Client accessible sur http://localhost:5173
-    volumes:
-      - client-dist:/usr/share/nginx/html
+      - "5173:80"
 
   dashboard:
     build:
       context: ./dashboard
     container_name: dashboard-app
     ports:
-      - "5174:80"   # Dashboard accessible sur http://localhost:5174
-    volumes:
-      - dashboard-dist:/usr/share/nginx/html
-
-volumes:
-  client-dist:
-  dashboard-dist:
+      - "5174:80"
