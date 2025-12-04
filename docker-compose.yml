@@ -4,14 +4,14 @@ services:
       context: ./client
     container_name: client-app
     volumes:
-      - client-dist:/usr/share/nginx/html
+      - client-dist:/usr/share/nginx/html/client
 
   dashboard:
     build:
       context: ./dashboard
     container_name: dashboard-app
     volumes:
-      - dashboard-dist:/usr/share/nginx/html
+      - dashboard-dist:/usr/share/nginx/html/dashboard
 
   nginx:
     image: nginx:1.25-alpine
