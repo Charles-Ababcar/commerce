@@ -9,3 +9,4 @@ RUN npm run build
 # Étape 2 : serveur Nginx
 FROM nginx:1.25-alpine
 COPY --from=build /app/dist /usr/share/nginx/html/dashboard
+EXPOSE 80
