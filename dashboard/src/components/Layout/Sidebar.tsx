@@ -254,7 +254,7 @@ export function Sidebar() {
           {/* Footer avec actions - position fixe en bas */}
           <div className="p-4 border-t border-sidebar-border/50 space-y-3 flex-shrink-0">
             {/* Quick Actions */}
-            {!isCollapsed && (
+            {/* {!isCollapsed && (
               <div className="flex gap-2 mb-3">
                 <Button 
                   variant="outline" 
@@ -275,7 +275,7 @@ export function Sidebar() {
                   Paramètres
                 </Button>
               </div>
-            )}
+            )} */}
 
             {/* Toggle Collapse Button */}
             <Tooltip delayDuration={0}>
