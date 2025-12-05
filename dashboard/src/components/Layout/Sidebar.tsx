@@ -10,16 +10,9 @@ import {
   ChevronLeft,
   ChevronRight,
   Users,
-  Settings,
   Bell,
   HelpCircle,
-  BarChart3,
-  TrendingUp,
-  CreditCard,
-  Layers,
-  Home,
-  Briefcase,
-  FileText,
+  Settings,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -55,7 +48,7 @@ interface NavItem {
 // Groupes de navigation (version simplifiée)
 const navItems = [
   { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-  { to: "/", icon: Home, label: "Accueil" },
+  { to: "/", icon: LayoutDashboard, label: "Accueil" }, // Changé de Home à LayoutDashboard pour cohérence
   { to: "/orders", icon: Package, label: "Commandes", badge: 12 },
   { to: "/products", icon: ShoppingBag, label: "Produits", badge: 3 },
   { to: "/shop", icon: ShoppingCart, label: "Boutique" },
@@ -80,8 +73,6 @@ export function Sidebar() {
     navigate("/profile");
   };
 
-
-
   const goToNotifications = () => {
     navigate("/notifications");
   };
@@ -99,17 +90,23 @@ export function Sidebar() {
             "fixed left-0 top-0 h-screen bg-gradient-to-b from-sidebar via-sidebar/95 to-sidebar-accent/10",
             "border-r border-sidebar-border/50 backdrop-blur-sm",
             "transition-all duration-300 ease-in-out cursor-default z-40",
-            "flex flex-col",
+            "flex flex-col overflow-hidden",
             isCollapsed ? "w-20" : "w-64"
           )}
         >
           {/* Header avec logo */}
-          <div className="p-6 border-b border-sidebar-border/50 flex-shrink-0">
+          <div className={cn(
+            "p-6 border-b border-sidebar-border/50 flex-shrink-0",
+            isCollapsed ? "px-4" : ""
+          )}>
             <div className={cn(
               "flex items-center gap-3 transition-all duration-300",
               isCollapsed ? "justify-center" : "justify-between"
             )}>
-              <div className="flex items-center gap-3">
+              <div className={cn(
+                "flex items-center gap-3",
+                isCollapsed ? "justify-center" : ""
+              )}>
                 <div className="relative">
                   <img
                     src={LogoMinane}
@@ -178,99 +175,112 @@ export function Sidebar() {
             )}
           </div>
 
-          {/* Navigation principale - sans scroll */}
-          <nav className="flex-1 py-4 px-3 space-y-1 overflow-hidden">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = isPathActive(item.to);
-              
-              return (
-                <Tooltip key={item.to} delayDuration={0}>
-                  <TooltipTrigger asChild>
-                    <NavLink
-                      to={item.to}
-                      className={cn(
-                        "flex items-center gap-3 px-3 py-3 rounded-lg transition-all duration-200 relative group cursor-pointer",
-                        "hover:bg-sidebar-accent/30 hover:text-sidebar-foreground",
-                        isActive
-                          ? "bg-blue-500/20 text-blue-400 border border-blue-400/20 shadow-lg shadow-blue-500/10"
-                          : "text-sidebar-foreground/80",
-                        isCollapsed ? "justify-center" : ""
-                      )}
-                    >
-                      <div className="relative">
-                        <Icon 
-                          className={cn(
-                            "transition-transform duration-200",
-                            isActive 
-                              ? "scale-110 text-blue-400" 
-                              : "group-hover:scale-105 group-hover:text-blue-300"
-                          )} 
-                          size={20} 
-                        />
-                        {item.badge && (
-                          <Badge className="absolute -top-1.5 -right-1.5 h-4 w-4 p-0 flex items-center justify-center text-[10px]">
-                            {item.badge}
-                          </Badge>
+          {/* Navigation principale - AVEC défilement */}
+          <div className="flex-1 overflow-y-auto py-4 scrollbar-thin">
+            <nav className="px-3 space-y-1">
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = isPathActive(item.to);
+                
+                return (
+                  <Tooltip key={item.to} delayDuration={0}>
+                    <TooltipTrigger asChild>
+                      <NavLink
+                        to={item.to}
+                        className={cn(
+                          "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 relative group cursor-pointer mb-1",
+                          "hover:bg-sidebar-accent/30 hover:text-sidebar-foreground",
+                          isActive
+                            ? "bg-blue-500/20 text-blue-400 border border-blue-400/20 shadow-lg shadow-blue-500/10"
+                            : "text-sidebar-foreground/80",
+                          isCollapsed ? "justify-center py-3" : ""
                         )}
-                      </div>
-                      
-                      {!isCollapsed && (
-                        <div className="flex-1 flex items-center justify-between min-w-0">
-                          <span className="font-medium text-sm truncate">
-                            {item.label}
-                          </span>
-                          {item.badge && (
-                            <Badge variant="secondary" className="ml-2 text-xs h-5 min-w-5">
-                              {item.badge}
+                      >
+                        <div className="relative flex-shrink-0">
+                          <Icon 
+                            className={cn(
+                              "transition-transform duration-200",
+                              isActive 
+                                ? "scale-110 text-blue-400" 
+                                : "group-hover:scale-105 group-hover:text-blue-300"
+                            )} 
+                            size={20} 
+                          />
+                          {item.badge && isCollapsed && (
+                            <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center text-xs border-2 border-sidebar">
+                              {item.badge > 9 ? "9+" : item.badge}
                             </Badge>
                           )}
                         </div>
-                      )}
-                      
-                      {isActive && !isCollapsed && (
-                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2 w-1.5 h-1.5 bg-blue-400 rounded-full"></div>
-                      )}
-                    </NavLink>
-                  </TooltipTrigger>
-                  {isCollapsed && (
-                    <TooltipContent side="right" className="bg-blue-500 text-white text-sm">
-                      {item.label}
-                      {item.badge && (
-                        <span className="ml-1 text-xs opacity-90">({item.badge})</span>
-                      )}
-                    </TooltipContent>
-                  )}
-                </Tooltip>
-              );
-            })}
-          </nav>
+                        
+                        {!isCollapsed && (
+                          <div className="flex-1 flex items-center justify-between min-w-0">
+                            <span className="font-medium text-sm truncate">
+                              {item.label}
+                            </span>
+                            {item.badge && (
+                              <Badge variant="secondary" className="ml-2 text-xs h-5 min-w-5 flex-shrink-0">
+                                {item.badge > 9 ? "9+" : item.badge}
+                              </Badge>
+                            )}
+                          </div>
+                        )}
+                        
+                        {isActive && !isCollapsed && (
+                          <div className="absolute right-3 top-1/2 transform -translate-y-1/2 w-1.5 h-1.5 bg-blue-400 rounded-full"></div>
+                        )}
+                      </NavLink>
+                    </TooltipTrigger>
+                    {isCollapsed && (
+                      <TooltipContent 
+                        side="right" 
+                        className="bg-blue-500 text-white text-sm py-1.5 px-2.5"
+                        sideOffset={5}
+                      >
+                        <div className="flex items-center gap-1.5">
+                          <span>{item.label}</span>
+                          {item.badge && (
+                            <Badge variant="outline" className="ml-1 h-4 min-w-4 p-0 text-[10px] border-white/30 bg-white/20">
+                              {item.badge > 9 ? "9+" : item.badge}
+                            </Badge>
+                          )}
+                        </div>
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
+                );
+              })}
+            </nav>
+          </div>
 
           {/* Footer avec actions - position fixe en bas */}
-          <div className="p-4 border-t border-sidebar-border/50 space-y-3 flex-shrink-0">
-            {/* Quick Actions */}
-            {/* {!isCollapsed && (
-              <div className="flex gap-2 mb-3">
+          <div className={cn(
+            "p-4 border-t border-sidebar-border/50 space-y-3 flex-shrink-0",
+            isCollapsed ? "px-3" : ""
+          )}>
+            {/* Boutons d'aide et paramètres (cachés en mode réduit) */}
+            {!isCollapsed && (
+              <div className="flex gap-2 mb-2">
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  className="flex-1 h-8 cursor-pointer text-xs"
+                  className="flex-1 h-8 cursor-pointer text-xs px-2"
                   onClick={() => navigate("/help")}
                 >
-                  <HelpCircle className="h-3 w-3 mr-1" />
+                  <HelpCircle className="h-3.5 w-3.5 mr-1.5" />
                   Aide
                 </Button>
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  className="flex-1 h-8 cursor-pointer text-xs"
-                  onClick={goToSettings}
+                  className="flex-1 h-8 cursor-pointer text-xs px-2"
+                  onClick={() => navigate("/settings")}
                 >
-                  <Settings className="h-3 w-3 mr-1" />
+                  <Settings className="h-3.5 w-3.5 mr-1.5" />
                   Paramètres
                 </Button>
               </div>
-            )} */}
+            )}
 
             {/* Toggle Collapse Button */}
             <Tooltip delayDuration={0}>
@@ -280,7 +290,8 @@ export function Sidebar() {
                   size={isCollapsed ? "icon" : "default"}
                   className={cn(
                     "w-full cursor-pointer text-sidebar-foreground/70 hover:text-blue-400 hover:bg-blue-500/10",
-                    "transition-all duration-200 group h-9"
+                    "transition-all duration-200 group h-9",
+                    isCollapsed ? "px-0" : ""
                   )}
                   onClick={() => setIsCollapsed(!isCollapsed)}
                 >
@@ -309,7 +320,8 @@ export function Sidebar() {
                       size={isCollapsed ? "icon" : "default"}
                       className={cn(
                         "w-full cursor-pointer border-red-500/30 text-red-400 hover:bg-red-500/10 hover:text-red-300",
-                        "transition-all duration-200 group h-9"
+                        "transition-all duration-200 group h-9",
+                        isCollapsed ? "px-0" : ""
                       )}
                     >
                       <LogOut className={cn("h-4 w-4", isCollapsed ? "" : "mr-2")} />
