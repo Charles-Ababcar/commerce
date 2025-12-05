@@ -61,10 +61,7 @@ const navItems = [
   { to: "/shop", icon: ShoppingCart, label: "Boutique" },
   { to: "/category", icon: IconCategory2, label: "Catégories" },
   { to: "/users", icon: Users, label: "Utilisateurs" },
-  { to: "/analytics", icon: BarChart3, label: "Analytique" },
-  { to: "/reports", icon: FileText, label: "Rapports" },
   { to: "/profile", icon: User, label: "Profil" },
-  { to: "/settings", icon: Settings, label: "Paramètres" },
 ];
 
 export function Sidebar() {
@@ -83,9 +80,7 @@ export function Sidebar() {
     navigate("/profile");
   };
 
-  const goToSettings = () => {
-    navigate("/settings");
-  };
+
 
   const goToNotifications = () => {
     navigate("/notifications");
