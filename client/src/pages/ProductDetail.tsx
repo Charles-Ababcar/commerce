@@ -54,26 +54,6 @@ const ProductDetail = () => {
 
   console.log('================PRODUCT==================',product);
 
-  // Mutation pour ajouter au panier avec typage correct
-// Dans ProductDetail.tsx et ProductCard.tsx, remplacez la mutation addToCartMutation par :
-
-// const addToCartMutation = useMutation({
-//   mutationFn: async () => {
-//     let cartId = localStorage.getItem('cart_id');
-    
-//     if (!cartId) {
-//       // Créer un nouveau panier avec le produit
-//       const cartResponse = await apiClient.createCart(product!.id.toString(), quantity) as ApiResponse<Cart>;
-//       cartId = cartResponse.data.id;
-//       localStorage.setItem('cart_id', cartId);
-//     } else {
-//       // Ajouter au panier existant
-//       await apiClient.addToCart(cartId, Number(product!.id), quantity) as ApiResponse<Cart>;
-//     }
-    
-//     return cartId;
-//   },
-
 // ProductDetail.tsx : Correction de addToCartMutation
 const addToCartMutation = useMutation({
    mutationFn: async () => {
