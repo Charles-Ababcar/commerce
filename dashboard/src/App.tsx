@@ -14,6 +14,8 @@ import NotFound from "./pages/NotFound";
 import '@mantine/core/styles.css';
 import CategoryList from "./pages/categories/CategoryList";
 import ListUsers from "./pages/users/Users";
+import ForgotPassword from "./pages/ForgetPassword";
+import ResetPassword from "./pages/resetPassword";
 const queryClient = new QueryClient();
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -46,6 +48,8 @@ const App = () => (
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/shop" element={<ProtectedRoute><Shop /></ProtectedRoute>} />
             <Route path="/category" element={<ProtectedRoute><CategoryList /></ProtectedRoute>} />
+             <Route path="/forgot-password" element={<ForgotPassword />} />
+             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/" element={<Navigate to="/dashboard" />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

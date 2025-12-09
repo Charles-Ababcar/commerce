@@ -13,6 +13,7 @@ import Cart from "./pages/Cart";
 import OrderSuccessPage from "./pages/OrderSuccessPage";
 import ShopDetailPage from "./pages/ShopDetailPage";
 import ShopsPage from "./pages/Shops";
+import ForgotPassword from "../../dashboard/src/pages/ForgetPassword";
 
 const queryClient = new QueryClient();
 
@@ -32,6 +33,7 @@ const App = () => (
           <Route path="/checkout/:cartId" element={<CheckoutPage />} />
           <Route path="/order-success/:orderId?" element={<OrderSuccessPage />} />
           <Route path="/auth" element={<Auth />} />
+           <Route path="/forget-password" element={<ForgotPassword />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
