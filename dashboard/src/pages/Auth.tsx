@@ -316,9 +316,7 @@ export default function Auth() {
                       type="button"
                       variant="link"
                       className="text-sm text-primary hover:text-primary/80 px-0"
-                      onClick={() => toast.info('Fonctionnalité à venir', {
-                        description: 'Contactez l\'administrateur pour réinitialiser votre mot de passe'
-                      })}
+                     onClick={() => navigate('/forgot-password')}
                     >
                       Mot de passe oublié ?
                     </Button>
@@ -349,7 +347,10 @@ export default function Auth() {
                   <Button
                     variant="link"
                     className="text-primary hover:text-primary/80 px-0"
-                     onClick={() => navigate('/request-access')}
+                    
+                     onClick={() => toast.info('Fonctionnalité à venir', {
+                        description: 'Contactez l\'administrateur pour réinitialiser votre mot de passe'
+                      })}
                   >
                     Demander un accès
                   </Button>
