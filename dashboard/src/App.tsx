@@ -16,6 +16,7 @@ import CategoryList from "./pages/categories/CategoryList";
 import ListUsers from "./pages/users/Users";
 import ForgotPassword from "./pages/ForgetPassword";
 import ResetPassword from "./pages/resetPassword";
+import RequestAccess from "./pages/RequestAccess";
 const queryClient = new QueryClient();
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -50,6 +51,7 @@ const App = () => (
             <Route path="/category" element={<ProtectedRoute><CategoryList /></ProtectedRoute>} />
              <Route path="/forgot-password" element={<ForgotPassword />} />
              <Route path="/reset-password" element={<ResetPassword />} />
+                <Route path="/request-access" element={<RequestAccess />} />
             <Route path="/" element={<Navigate to="/dashboard" />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

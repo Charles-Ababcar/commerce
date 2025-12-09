@@ -349,9 +349,7 @@ export default function Auth() {
                   <Button
                     variant="link"
                     className="text-primary hover:text-primary/80 px-0"
-                    onClick={() => toast.info('Fonctionnalité à venir', {
-                      description: 'Contactez l\'administrateur pour créer un compte'
-                    })}
+                     onClick={() => navigate('/request-access')}
                   >
                     Demander un accès
                   </Button>
