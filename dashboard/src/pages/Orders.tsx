@@ -108,10 +108,10 @@ const STATUS_OPTIONS = [
 ];
 
 const SORT_OPTIONS = [
-  { value: 'createdAt_desc', label: 'Plus récentes' },
-  { value: 'createdAt_asc', label: 'Plus anciennes' },
-  { value: 'totalCents_desc', label: 'Montant élevé' },
-  { value: 'totalCents_asc', label: 'Montant faible' },
+  { value: 'createdAt,desc', label: 'Plus récentes' },
+  { value: 'createdAt,asc', label: 'Plus anciennes' },
+  { value: 'totalCents,desc', label: 'Montant élevé' },
+  { value: 'totalCents,asc', label: 'Montant faible' },
 ];
 
 const formatPrice = (cents: number) => {
@@ -141,7 +141,7 @@ export default function Orders() {
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
-  const [sortBy, setSortBy] = useState('createdAt_desc');
+  const [sortBy, setSortBy] = useState('createdAt,desc');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const queryClient = useQueryClient();
@@ -217,11 +217,11 @@ export default function Orders() {
   const handleClearFilters = () => {
     setSearch('');
     setStatusFilter('ALL');
-    setSortBy('createdAt_desc');
+    setSortBy('createdAt,desc');
     setPage(0);
   };
 
-  const hasActiveFilters = search || statusFilter !== 'ALL' || sortBy !== 'createdAt_desc';
+  const hasActiveFilters = search || statusFilter !== 'ALL' || sortBy !== 'createdAt,desc';
 
   const getPageNumbers = () => {
     // Si aucune donnée ou pages invalides, retourner seulement la page 0
