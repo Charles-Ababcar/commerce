@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useParams, useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react"; // Ajout de useEffect
+import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { 
   Loader2, 
@@ -32,26 +32,27 @@ import { Cart, CartItem } from "@/types/api";
 // 🚨 Numéro de l'entreprise pour WhatsApp (sans + ni espaces)
 const WHATSAPP_NUMBER = "221776562121";
 
-// 🚨 CORRECTION : Schéma simplifié avec validation adaptée
+// 🚨 CORRECTION SIMPLIFIÉE : Schéma moins restrictif pour Sénégal
 const checkoutSchema = z.object({
   name: z.string()
     .min(2, { message: "Le nom doit contenir au moins 2 caractères" })
     .max(100, { message: "Le nom ne doit pas dépasser 100 caractères" }),
   
   email: z.string()
-    .email({ message: "Veuillez entrer une adresse email valide" })
+    .email({ message: "Email invalide (optionnel)" })
     .optional()
-    .or(z.literal('')),
-  
+    .or(z.literal(''))
+    .or(z.string().max(0)), // Accepte chaîne vide
+    
   address: z.string()
     .min(5, { message: "L'adresse doit contenir au moins 5 caractères" })
     .max(200, { message: "L'adresse ne doit pas dépasser 200 caractères" }),
     
   phoneNumber: z.string()
-    .min(9, { message: "Le numéro de téléphone doit contenir au moins 9 chiffres" })
-    .max(15, { message: "Le numéro de téléphone ne doit pas dépasser 15 chiffres" })
-    .regex(/^[0-9+\s\-()]*$/, { 
-      message: "Veuillez entrer un numéro de téléphone valide" 
+    .min(7, { message: "Le numéro doit contenir au moins 7 chiffres" })
+    .max(20, { message: "Le numéro ne doit pas dépasser 20 caractères" })
+    .regex(/^[0-9+\-\s()]*$/, { 
+      message: "Caractères autorisés: chiffres, +, -, espaces, ()" 
     }),
 });
 
@@ -78,8 +79,14 @@ const CheckoutPage = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
-  // 🚨 CORRECTION : Ajout d'un état pour suivre manuellement la validité
-  const [isFormValid, setIsFormValid] = useState(false);
+  // 🚨 AJOUT: État pour debug
+  const [formErrors, setFormErrors] = useState<any>({});
+  const [formValues, setFormValues] = useState<CheckoutFormData>({
+    name: '',
+    email: '',
+    address: '',
+    phoneNumber: '',
+  });
   
   // Récupération du panier
   const { data: cartData, isLoading: isCartLoading } = useQuery<Cart, Error>({
@@ -88,7 +95,7 @@ const CheckoutPage = () => {
     enabled: !!cartId,
   });
 
-  // 🚨 CORRECTION : Ajout du mode de validation
+  // 🚨 CORRECTION: Formulaire avec validation manuelle
   const form = useForm<CheckoutFormData>({
     resolver: zodResolver(checkoutSchema),
     defaultValues: {
@@ -97,23 +104,28 @@ const CheckoutPage = () => {
       address: '',
       phoneNumber: '',
     },
-    mode: "onTouched", // Valide au toucher plutôt qu'à la soumission
+    mode: "onBlur", // Validation au blur
   });
 
-  // 🚨 CORRECTION : Surveiller les changements de validité
+  // 🚨 AJOUT: Surveillance des changements pour debug
   useEffect(() => {
     const subscription = form.watch((value) => {
-      // Vérifier manuellement la validité des champs requis
-      const isValid = 
-        value.name && value.name.length >= 2 &&
-        value.address && value.address.length >= 5 &&
-        value.phoneNumber && value.phoneNumber.length >= 9;
-      
-      setIsFormValid(!!isValid);
+      setFormValues(value as CheckoutFormData);
+      console.log("🔍 Valeurs du formulaire:", value);
+      console.log("✅ Est valide?", form.formState.isValid);
+      console.log("📋 Erreurs:", form.formState.errors);
     });
-    
     return () => subscription.unsubscribe();
   }, [form.watch]);
+
+  useEffect(() => {
+    console.log("📊 État complet du formulaire:", {
+      isValid: form.formState.isValid,
+      errors: form.formState.errors,
+      isDirty: form.formState.isDirty,
+      touched: form.formState.touchedFields
+    });
+  }, [form.formState]);
 
   // Mutation pour créer la commande
   const createOrderMutation = useMutation({
@@ -121,12 +133,7 @@ const CheckoutPage = () => {
       return apiClient.createOrder(orderRequest);
     },
     onSuccess: (data) => {
-      console.log("🧹 Suppression panier côté FRONT (localStorage + cache)");
-
-      // 1. Supprimer le cart_id
       localStorage.removeItem("cart_id");
-
-      // 2. Invalider le cache du panier
       queryClient.removeQueries({ queryKey: ["cart"] });
       
       console.log("🎉 Commande envoyée avec succès", data);
@@ -174,7 +181,6 @@ const CheckoutPage = () => {
 
   const calculateShipping = () => {
     const subtotal = calculateSubtotal();
-    // Frais de livraison au Sénégal
     if (subtotal > 50000) return 0; 
     if (subtotal > 25000) return 1500; 
     return 2500; 
@@ -193,14 +199,26 @@ const CheckoutPage = () => {
   // FONCTION : Gestion de la confirmation WhatsApp (PaD)
   // -----------------------------------------------------
   const handleWhatsAppOrder = (data: CheckoutFormData) => {
+    // 🚨 CORRECTION: Validation manuelle avant WhatsApp
+    const validationResult = checkoutSchema.safeParse(data);
+    
+    if (!validationResult.success) {
+      toast({
+        title: "Erreur de validation",
+        description: "Veuillez corriger les erreurs avant de continuer",
+        variant: "destructive"
+      });
+      return;
+    }
+
     const total = formatPrice(calculateTotal());
     
-    // Message pré-rempli pour l'entreprise
     const message = encodeURIComponent(
         `Bonjour, je souhaite confirmer ma commande. Voici mes informations :\n\n` +
         `👤 Nom: ${data.name}\n` +
         `📞 Téléphone: ${data.phoneNumber}\n` +
         `🏠 Adresse: ${data.address}\n` +
+        `📧 Email: ${data.email || 'Non fourni'}\n` +
         `💰 Montant Total: ${total} (PaD)\n\n` +
         `Mon ID panier temporaire est : ${cartId}.\n` +
         `Veuillez confirmer l'expédition. Merci.`
@@ -212,7 +230,7 @@ const CheckoutPage = () => {
     
     toast({
         title: "Chat WhatsApp ouvert",
-        description: "Veuillez envoyer le message pré-rempli pour confirmer votre commande. Vous serez recontacté(e) rapidement.",
+        description: "Veuillez envoyer le message pré-rempli pour confirmer votre commande.",
         duration: 8000,
     });
   };
@@ -230,7 +248,17 @@ const CheckoutPage = () => {
       return;
     }
 
-    // Préparer la requête pour l'API
+    // Validation manuelle avant envoi
+    const validationResult = checkoutSchema.safeParse(data);
+    if (!validationResult.success) {
+      toast({
+        title: "Erreur de validation",
+        description: "Veuillez corriger les erreurs avant de soumettre",
+        variant: "destructive"
+      });
+      return;
+    }
+
     const orderRequest: PlaceOrderRequest = {
       cartId: cartId!,   
       client: {
@@ -245,15 +273,21 @@ const CheckoutPage = () => {
       }))
     };
 
-    // Exécuter la mutation
     createOrderMutation.mutate(orderRequest);
   };
 
   const isSubmitting = createOrderMutation.isPending;
 
-  // 🚨 CORRECTION : Calculer si les boutons doivent être désactivés
+  // 🚨 CORRECTION: Logique de désactivation simplifiée
   const isCartEmpty = !cartData?.items?.length;
-  const shouldDisableButtons = isSubmitting || !isFormValid || isCartEmpty;
+  
+  // Vérification manuelle des champs requis
+  const requiredFieldsValid = 
+    form.getValues().name?.length >= 2 &&
+    form.getValues().address?.length >= 5 &&
+    form.getValues().phoneNumber?.length >= 7;
+  
+  const shouldDisableButtons = isSubmitting || !requiredFieldsValid || isCartEmpty;
 
   if (isCartLoading) {
     return (
@@ -300,8 +334,22 @@ const CheckoutPage = () => {
                   </AlertDescription>
                 </Alert>
 
+                {/* 🚨 AJOUT: Panneau de debug (à retirer en production) */}
+                <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <h4 className="font-semibold text-yellow-800 mb-2">Debug Info:</h4>
+                  <p className="text-sm text-yellow-700 mb-1">
+                    Champs requis valides: {requiredFieldsValid ? '✅' : '❌'}
+                  </p>
+                  <p className="text-sm text-yellow-700 mb-1">
+                    Panier vide: {isCartEmpty ? '✅' : '❌'}
+                  </p>
+                  <p className="text-sm text-yellow-700">
+                    Boutons désactivés: {shouldDisableButtons ? '✅' : '❌'}
+                  </p>
+                </div>
+
                 <Form {...form}>
-                  <form onSubmit={form.handleSubmit(handleFinalizeOrder)} className="space-y-6">
+                  <form className="space-y-6">
                     {/* Informations personnelles */}
                     <div className="space-y-4">
                       <h3 className="text-lg font-semibold flex items-center gap-2">
@@ -347,7 +395,8 @@ const CheckoutPage = () => {
                                     className="pl-10" 
                                     disabled={isSubmitting}
                                     {...field} 
-                                    value={field.value ?? ''}
+                                    value={field.value || ''}
+                                    onChange={(e) => field.onChange(e.target.value || '')}
                                   />
                                 </div>
                               </FormControl>
@@ -406,7 +455,7 @@ const CheckoutPage = () => {
                                 <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                                 <Input 
                                   type="tel" 
-                                  placeholder="+221 77 123 45 67" 
+                                  placeholder="+221 77 123 45 67 ou 771234567" 
                                   className="pl-10" 
                                   disabled={isSubmitting}
                                   {...field} 
@@ -441,10 +490,10 @@ const CheckoutPage = () => {
                       <div className="space-y-3">
                         {/* 1. Bouton "Finaliser" (Appel API Standard) */}
                         <Button 
-                          onClick={form.handleSubmit(handleFinalizeOrder)} 
+                          onClick={() => form.handleSubmit(handleFinalizeOrder)()}
                           type="button" 
                           className="w-full py-6 text-lg font-semibold bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary transition-all shadow-lg"
-                          disabled={shouldDisableButtons} // 🚨 CORRECTION : Utilisation de la variable calculée
+                          disabled={shouldDisableButtons}
                         >
                           {isSubmitting ? (
                             <>
@@ -464,8 +513,8 @@ const CheckoutPage = () => {
                           type="button"
                           variant="default"
                           className="w-full py-4 text-lg font-semibold bg-green-500 hover:bg-green-600 transition-all shadow-lg"
-                          onClick={form.handleSubmit(handleWhatsAppOrder)} 
-                          disabled={shouldDisableButtons} // 🚨 CORRECTION : Utilisation de la variable calculée
+                          onClick={() => form.handleSubmit(handleWhatsAppOrder)()}
+                          disabled={shouldDisableButtons}
                         >
                           <svg className="mr-2 h-5 w-5 fill-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512">
                             <path d="M380.9 97.4C339.4 56.6 283.6 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.3 77.2 30.6 110.8L4.3 490.1c-1.9 6.8-.7 14.9 3.2 20.6s10 9 17.5 7.3l126.8-32.9c32.7 17.8 69.3 27 106.9 27c122.4 0 222-99.6 222-222c0-59.8-24.1-115.6-65-157.1zm-157 325.2c-23.7 0-46.7-7.6-67-21.7L100.9 387l-41.9 10.9L108 340.5c-14.2-20.3-21.7-43.3-21.7-67c0-99.8 81-180.8 180.8-180.8c50.2 0 97.3 19.6 133.4 55.6c36 36 55.6 83.1 55.6 133.4c0 99.8-81 180.8-180.8 180.8zm119.5-121.7c-5.7-2.8-33.8-16.5-39.1-18.4s-9-2.8-12.8 2.8c-3.8 5.7-14.7 18.4-18 22.2c-3.3 3.8-6.7 4.2-12.4 1.4c-47-23.6-77.9-58.8-109.9-106.6c-5.7-9.9 5.2-9.2 14.7-9.2c12.7 0 16.2 0 22.2 0c5.9 0 9.1-1.9 12.8-5.7c3.7-3.8 5-9.9 7.6-14.9c2.6-5 1.3-9.5-.6-13.3c-1.9-3.8-17-40.4-23.3-55.5c-6.2-15-12.7-13-17.5-13.2c-4.8-.2-10.2-.4-15.6-.4s-13.5 1.9-20.6 9.5c-7 7.6-26.9 26.2-26.9 63.8c0 37.6 27.6 74.3 31.3 79.9c3.8 5.7 54.4 87.7 132.8 120.7c18.9 7.8 33.7 12.5 45.2 16c14.9 4.6 28.3 3.9 38.6 2.4c11.3-1.6 33.8-13.8 38.6-27.1c4.8-13.3 4.8-24.6 3.4-27.1c-1.4-2.5-5.2-3.9-11-6.9z"/>
