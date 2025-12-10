@@ -305,10 +305,14 @@ async getProducts(params: any = {}) {
     });
   }
 
+
   async getOrders(params: any = {}) {
-    const query = new URLSearchParams(params).toString();
-    return this.request<any>(`/orders?${query}`);
-  }
+    const query = new URLSearchParams(params).toString();
+    // Utilisation de la query string complète pour la méthode request
+    return this.request<any>(`/orders${query ? `?${query}` : ''}`); 
+  }
+
+  
 
   async getUserOrders(userId: string) {
     return this.request<any>(`/orders/user/${userId}`);
