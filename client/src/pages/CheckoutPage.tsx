@@ -32,18 +32,17 @@ import { Cart, CartItem } from "@/types/api";
 // 🚨 Numéro de l'entreprise pour WhatsApp (sans + ni espaces)
 const WHATSAPP_NUMBER = "221776562121";
 
-// 🚨 CORRECTION SIMPLIFIÉE : Schéma moins restrictif pour Sénégal
+// 🚨 Schéma simplifié
 const checkoutSchema = z.object({
   name: z.string()
     .min(2, { message: "Le nom doit contenir au moins 2 caractères" })
     .max(100, { message: "Le nom ne doit pas dépasser 100 caractères" }),
   
   email: z.string()
-    .email({ message: "Email invalide (optionnel)" })
+    .email({ message: "Email invalide" })
     .optional()
-    .or(z.literal(''))
-    .or(z.string().max(0)), // Accepte chaîne vide
-    
+    .or(z.literal('')),
+  
   address: z.string()
     .min(5, { message: "L'adresse doit contenir au moins 5 caractères" })
     .max(200, { message: "L'adresse ne doit pas dépasser 200 caractères" }),
@@ -79,8 +78,8 @@ const CheckoutPage = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
-  // 🚨 AJOUT: État pour debug
-  const [formErrors, setFormErrors] = useState<any>({});
+  // 🚨 Ajout d'un état pour suivre manuellement la validité
+  const [isFormValid, setIsFormValid] = useState(false);
   const [formValues, setFormValues] = useState<CheckoutFormData>({
     name: '',
     email: '',
@@ -95,7 +94,7 @@ const CheckoutPage = () => {
     enabled: !!cartId,
   });
 
-  // 🚨 CORRECTION: Formulaire avec validation manuelle
+  // Formulaire
   const form = useForm<CheckoutFormData>({
     resolver: zodResolver(checkoutSchema),
     defaultValues: {
@@ -104,28 +103,25 @@ const CheckoutPage = () => {
       address: '',
       phoneNumber: '',
     },
-    mode: "onBlur", // Validation au blur
+    mode: "onTouched",
   });
 
-  // 🚨 AJOUT: Surveillance des changements pour debug
+  // 🚨 Surveillance des changements pour déterminer la validité
   useEffect(() => {
     const subscription = form.watch((value) => {
       setFormValues(value as CheckoutFormData);
-      console.log("🔍 Valeurs du formulaire:", value);
-      console.log("✅ Est valide?", form.formState.isValid);
-      console.log("📋 Erreurs:", form.formState.errors);
+      
+      // Vérification manuelle des champs requis
+      const isValid = 
+        value.name && value.name.length >= 2 &&
+        value.address && value.address.length >= 5 &&
+        value.phoneNumber && value.phoneNumber.length >= 7;
+      
+      setIsFormValid(!!isValid);
     });
+    
     return () => subscription.unsubscribe();
   }, [form.watch]);
-
-  useEffect(() => {
-    console.log("📊 État complet du formulaire:", {
-      isValid: form.formState.isValid,
-      errors: form.formState.errors,
-      isDirty: form.formState.isDirty,
-      touched: form.formState.touchedFields
-    });
-  }, [form.formState]);
 
   // Mutation pour créer la commande
   const createOrderMutation = useMutation({
@@ -133,19 +129,25 @@ const CheckoutPage = () => {
       return apiClient.createOrder(orderRequest);
     },
     onSuccess: (data) => {
+      console.log("🧹 Suppression panier côté FRONT (localStorage + cache)");
+
+      // 1. Supprimer le cart_id
       localStorage.removeItem("cart_id");
+
+      // 2. Invalider le cache du panier
       queryClient.removeQueries({ queryKey: ["cart"] });
       
       console.log("🎉 Commande envoyée avec succès", data);
 
       toast({
         title: "Commande créée ! 🎉",
-        description: data.message,
+        description: data.message || "Votre commande a été créée avec succès",
       });
 
       navigate("/order-success", { 
         state: { 
           orderId: data.data?.orderId || `CMD-${Date.now()}`,
+          orderNumber: data.data?.orderNumber || `CMD-${Date.now().toString().slice(-6)}`,
           customerName: form.getValues().name,
           customerEmail: form.getValues().email,
           total: calculateTotal()
@@ -193,15 +195,81 @@ const CheckoutPage = () => {
   const formatPrice = (cents: number) => {
     return cents.toLocaleString("fr-FR") + " FCFA";
   };
+
+  // 🚨 NOUVELLE FONCTION : Formatage des produits pour WhatsApp
+  const formatProductsForWhatsApp = () => {
+    if (!cartData?.items || cartData.items.length === 0) return "";
+    
+    let productsText = "\n\n📦 *PRODUITS COMMANDÉS:*\n";
+    cartData.items.forEach((item, index) => {
+      const productTotal = formatPrice(item.totalCents);
+      const unitPrice = formatPrice(item.product.priceCents);
+      
+      productsText += `\n${index + 1}. *${item.product.name}*\n`;
+      productsText += `   💰 Prix unitaire: ${unitPrice}\n`;
+      productsText += `   📦 Quantité: ${item.quantity}\n`;
+      productsText += `   🧾 Sous-total: ${productTotal}\n`;
+      productsText += `   🏪 Vendeur: ${item.product.shop.name}\n`;
+    });
+    
+    return productsText;
+  };
+
+  // 🚨 NOUVELLE FONCTION : Message WhatsApp amélioré
+  const buildWhatsAppMessage = (orderNumber?: string) => {
+    const total = formatPrice(calculateTotal());
+    const subtotal = formatPrice(calculateSubtotal());
+    const shipping = calculateShipping() === 0 ? 'GRATUITE' : formatPrice(calculateShipping());
+    const productsText = formatProductsForWhatsApp();
+    
+    let message = `*NOUVELLE COMMANDE - ${orderNumber ? '#' + orderNumber : 'EN ATTENTE'}*\n`;
+    message += "━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n";
+    
+    message += "👤 *INFORMATIONS CLIENT:*\n";
+    message += `• Nom: ${formValues.name}\n`;
+    message += `• Téléphone: ${formValues.phoneNumber}\n`;
+    message += `• Adresse: ${formValues.address}\n`;
+    message += `• Email: ${formValues.email || 'Non fourni'}\n`;
+    
+    message += productsText;
+    
+    message += "\n━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n";
+    message += "💰 *RÉCAPITULATIF DE PAIEMENT:*\n";
+    message += `• Sous-total: ${subtotal}\n`;
+    message += `• Livraison: ${shipping}\n`;
+    message += `• *TOTAL À PAYER: ${total} (Paiement à la Livraison)*\n\n`;
+    
+    if (orderNumber) {
+      message += `📋 *NUMÉRO DE COMMANDE: #${orderNumber}*\n\n`;
+    } else {
+      message += `🛒 *ID PANIER TEMPORAIRE: ${cartId}*\n\n`;
+    }
+    
+    message += "━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
+    message += "✅ Merci de confirmer cette commande pour l'expédition.\n";
+    message += "🕒 Délai de livraison: 24-48h\n";
+    message += "📞 Contact: +221 77 656 21 21\n";
+    message += "━━━━━━━━━━━━━━━━━━━━━━━━━━";
+    
+    return encodeURIComponent(message);
+  };
   // -----------------------------------------------------
 
   // -----------------------------------------------------
-  // FONCTION : Gestion de la confirmation WhatsApp (PaD)
+  // 🚨 NOUVELLE FONCTION : Gestion WhatsApp après création commande
   // -----------------------------------------------------
-  const handleWhatsAppOrder = (data: CheckoutFormData) => {
-    // 🚨 CORRECTION: Validation manuelle avant WhatsApp
-    const validationResult = checkoutSchema.safeParse(data);
-    
+  const handleWhatsAppConfirmation = async (orderNumber?: string) => {
+    if (!cartData?.items || cartData.items.length === 0) {
+      toast({
+        title: "Panier vide",
+        description: "Votre panier est vide",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Validation du formulaire
+    const validationResult = checkoutSchema.safeParse(formValues);
     if (!validationResult.success) {
       toast({
         title: "Erreur de validation",
@@ -211,27 +279,18 @@ const CheckoutPage = () => {
       return;
     }
 
-    const total = formatPrice(calculateTotal());
-    
-    const message = encodeURIComponent(
-        `Bonjour, je souhaite confirmer ma commande. Voici mes informations :\n\n` +
-        `👤 Nom: ${data.name}\n` +
-        `📞 Téléphone: ${data.phoneNumber}\n` +
-        `🏠 Adresse: ${data.address}\n` +
-        `📧 Email: ${data.email || 'Non fourni'}\n` +
-        `💰 Montant Total: ${total} (PaD)\n\n` +
-        `Mon ID panier temporaire est : ${cartId}.\n` +
-        `Veuillez confirmer l'expédition. Merci.`
-    );
-
+    // Message WhatsApp avec ou sans numéro de commande
+    const message = buildWhatsAppMessage(orderNumber);
     const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${message}`;
     
     window.open(whatsappUrl, '_blank');
     
     toast({
-        title: "Chat WhatsApp ouvert",
-        description: "Veuillez envoyer le message pré-rempli pour confirmer votre commande.",
-        duration: 8000,
+      title: "Chat WhatsApp ouvert",
+      description: orderNumber 
+        ? `Commande #${orderNumber} envoyée. Veuillez confirmer l'expédition.` 
+        : "Veuillez envoyer le message pour confirmer votre commande.",
+      duration: 8000,
     });
   };
   // -----------------------------------------------------
@@ -276,16 +335,42 @@ const CheckoutPage = () => {
     createOrderMutation.mutate(orderRequest);
   };
 
+  // 🚨 NOUVELLE FONCTION : Bouton WhatsApp seul (sans création API)
+  const handleWhatsAppOnly = () => {
+    if (!cartData?.items || cartData.items.length === 0) {
+      toast({
+        title: "Panier vide",
+        description: "Votre panier est vide",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Validation du formulaire
+    const validationResult = checkoutSchema.safeParse(formValues);
+    if (!validationResult.success) {
+      toast({
+        title: "Erreur de validation",
+        description: "Veuillez corriger les erreurs avant de continuer",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Ouvrir WhatsApp avec le message détaillé
+    handleWhatsAppConfirmation();
+  };
+
   const isSubmitting = createOrderMutation.isPending;
 
-  // 🚨 CORRECTION: Logique de désactivation simplifiée
+  // Logique de désactivation
   const isCartEmpty = !cartData?.items?.length;
   
   // Vérification manuelle des champs requis
   const requiredFieldsValid = 
-    form.getValues().name?.length >= 2 &&
-    form.getValues().address?.length >= 5 &&
-    form.getValues().phoneNumber?.length >= 7;
+    formValues.name?.length >= 2 &&
+    formValues.address?.length >= 3 &&
+    formValues.phoneNumber?.length >= 7;
   
   const shouldDisableButtons = isSubmitting || !requiredFieldsValid || isCartEmpty;
 
@@ -333,20 +418,6 @@ const CheckoutPage = () => {
                     </div>
                   </AlertDescription>
                 </Alert>
-
-                {/* 🚨 AJOUT: Panneau de debug (à retirer en production) */}
-                {/* <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                  <h4 className="font-semibold text-yellow-800 mb-2">Debug Info:</h4>
-                  <p className="text-sm text-yellow-700 mb-1">
-                    Champs requis valides: {requiredFieldsValid ? '✅' : '❌'}
-                  </p>
-                  <p className="text-sm text-yellow-700 mb-1">
-                    Panier vide: {isCartEmpty ? '✅' : '❌'}
-                  </p>
-                  <p className="text-sm text-yellow-700">
-                    Boutons désactivés: {shouldDisableButtons ? '✅' : '❌'}
-                  </p>
-                </div> */}
 
                 <Form {...form}>
                   <form className="space-y-6">
@@ -508,18 +579,18 @@ const CheckoutPage = () => {
                           )}
                         </Button>
 
-                        {/* 2. Bouton "Confirmer via WhatsApp" (Option PaD) */}
+                        {/* 2. Bouton "Confirmer via WhatsApp" (Option PaD) - SANS API */}
                         <Button
                           type="button"
                           variant="default"
                           className="w-full py-4 text-lg font-semibold bg-green-500 hover:bg-green-600 transition-all shadow-lg"
-                          onClick={() => form.handleSubmit(handleWhatsAppOrder)()}
+                          onClick={handleWhatsAppOnly}
                           disabled={shouldDisableButtons}
                         >
                           <svg className="mr-2 h-5 w-5 fill-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512">
                             <path d="M380.9 97.4C339.4 56.6 283.6 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.3 77.2 30.6 110.8L4.3 490.1c-1.9 6.8-.7 14.9 3.2 20.6s10 9 17.5 7.3l126.8-32.9c32.7 17.8 69.3 27 106.9 27c122.4 0 222-99.6 222-222c0-59.8-24.1-115.6-65-157.1zm-157 325.2c-23.7 0-46.7-7.6-67-21.7L100.9 387l-41.9 10.9L108 340.5c-14.2-20.3-21.7-43.3-21.7-67c0-99.8 81-180.8 180.8-180.8c50.2 0 97.3 19.6 133.4 55.6c36 36 55.6 83.1 55.6 133.4c0 99.8-81 180.8-180.8 180.8zm119.5-121.7c-5.7-2.8-33.8-16.5-39.1-18.4s-9-2.8-12.8 2.8c-3.8 5.7-14.7 18.4-18 22.2c-3.3 3.8-6.7 4.2-12.4 1.4c-47-23.6-77.9-58.8-109.9-106.6c-5.7-9.9 5.2-9.2 14.7-9.2c12.7 0 16.2 0 22.2 0c5.9 0 9.1-1.9 12.8-5.7c3.7-3.8 5-9.9 7.6-14.9c2.6-5 1.3-9.5-.6-13.3c-1.9-3.8-17-40.4-23.3-55.5c-6.2-15-12.7-13-17.5-13.2c-4.8-.2-10.2-.4-15.6-.4s-13.5 1.9-20.6 9.5c-7 7.6-26.9 26.2-26.9 63.8c0 37.6 27.6 74.3 31.3 79.9c3.8 5.7 54.4 87.7 132.8 120.7c18.9 7.8 33.7 12.5 45.2 16c14.9 4.6 28.3 3.9 38.6 2.4c11.3-1.6 33.8-13.8 38.6-27.1c4.8-13.3 4.8-24.6 3.4-27.1c-1.4-2.5-5.2-3.9-11-6.9z"/>
                           </svg>
-                          Confirmer via WhatsApp
+                          Confirmer via WhatsApp (Paiement à Livraison)
                         </Button>
                       </div>
                       
