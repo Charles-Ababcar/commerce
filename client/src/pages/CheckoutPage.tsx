@@ -44,7 +44,7 @@ const checkoutSchema = z.object({
     .or(z.literal('')),
   
   address: z.string()
-    .min(5, { message: "L'adresse doit contenir au moins 5 caractères" })
+    .min(3, { message: "L'adresse doit contenir au moins 3 caractères" })
     .max(200, { message: "L'adresse ne doit pas dépasser 200 caractères" }),
     
   phoneNumber: z.string()
@@ -216,40 +216,42 @@ const CheckoutPage = () => {
   };
 
   // 🚨 NOUVELLE FONCTION : Message WhatsApp amélioré
-  const buildWhatsAppMessage = (orderNumber?: string) => {
+const buildWhatsAppMessage = (orderNumber?: string) => {
     const total = formatPrice(calculateTotal());
     const subtotal = formatPrice(calculateSubtotal());
     const shipping = calculateShipping() === 0 ? 'GRATUITE' : formatPrice(calculateShipping());
     const productsText = formatProductsForWhatsApp();
     
-    let message = `*NOUVELLE COMMANDE - ${orderNumber ? '#' + orderNumber : 'EN ATTENTE'}*\n`;
-    message += "━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n";
+    let message = `Bonjour, je souhaite confirmer ma commande. 🛒\n\n`;
     
-    message += "👤 *INFORMATIONS CLIENT:*\n";
-    message += `• Nom: ${formValues.name}\n`;
-    message += `• Téléphone: ${formValues.phoneNumber}\n`;
-    message += `• Adresse: ${formValues.address}\n`;
-    message += `• Email: ${formValues.email || 'Non fourni'}\n`;
+    message += "*📋 INFORMATIONS DE LIVRAISON:*\n";
+    message += `• 👤 Nom: ${formValues.name}\n`;
+    message += `• 📞 Téléphone: ${formValues.phoneNumber}\n`;
+    message += `• 🏠 Adresse: ${formValues.address}\n`;
+    message += `• 📧 Email: ${formValues.email || 'Non fourni'}\n\n`;
     
+    message += "*📦 DÉTAIL DE LA COMMANDE:*\n";
     message += productsText;
     
-    message += "\n━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n";
-    message += "💰 *RÉCAPITULATIF DE PAIEMENT:*\n";
+    message += "\n*💰 RÉCAPITULATIF DE PAIEMENT:*\n";
     message += `• Sous-total: ${subtotal}\n`;
-    message += `• Livraison: ${shipping}\n`;
-    message += `• *TOTAL À PAYER: ${total} (Paiement à la Livraison)*\n\n`;
+    message += `• Frais de livraison: ${shipping}\n`;
+    message += `• *Montant total: ${total}*\n`;
+    message += `• *Mode de paiement: Paiement à la livraison*\n\n`;
     
     if (orderNumber) {
-      message += `📋 *NUMÉRO DE COMMANDE: #${orderNumber}*\n\n`;
+      message += `*🆔 Numéro de commande: #${orderNumber}*\n\n`;
     } else {
-      message += `🛒 *ID PANIER TEMPORAIRE: ${cartId}*\n\n`;
+      message += `*🛒 Référence panier: ${cartId}*\n\n`;
     }
     
-    message += "━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
-    message += "✅ Merci de confirmer cette commande pour l'expédition.\n";
-    message += "🕒 Délai de livraison: 24-48h\n";
-    message += "📞 Contact: +221 77 656 21 21\n";
-    message += "━━━━━━━━━━━━━━━━━━━━━━━━━━";
+    message += "*📝 INFORMATIONS COMPLÉMENTAIRES:*\n";
+    message += "• Livraison prévue sous 24-48h\n";
+    message += "• Paiement accepté: Wave, Orange Money, Free Money\n";
+    message += "• Vous serez contacté(e) pour confirmation\n\n";
+    
+    message += "Merci pour votre professionnalisme ! 😊\n";
+    message += "En attente de votre confirmation pour l'expédition.";
     
     return encodeURIComponent(message);
   };
