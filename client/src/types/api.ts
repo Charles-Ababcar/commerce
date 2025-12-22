@@ -94,6 +94,7 @@ export interface PaginatedResponse<T> {
 
  // Interface pour la requête de commande
   export interface PlaceOrderRequest {
+     cartId?: string;
     client: {
       name: string;
       email: string;
@@ -104,10 +105,10 @@ export interface PaginatedResponse<T> {
       productId: number;
       quantity: number;
     }>;
-
-    // Ajout des champs de livraison
-  deliveryZoneId?: number;
-  deliveryAddressDetail?: string;
+    deliveryZoneId: number;
+    deliveryAddressDetail: string;
+    channel?: string;
+  
   }
 
   // Interface pour la réponse

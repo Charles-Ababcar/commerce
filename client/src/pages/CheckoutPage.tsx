@@ -26,13 +26,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api";
-import { Cart, CartItem } from "@/types/api";
+import { Cart, CartItem, PlaceOrderRequest } from "@/types/api";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-// 🚨 Numéro de l'entreprise pour WhatsApp
 const WHATSAPP_NUMBER = "221776562121";
 
-// 🚨 Schéma de validation complet
 const checkoutSchema = z.object({
   name: z.string()
     .min(2, { message: "Le nom doit contenir au moins 2 caractères" })
@@ -41,7 +39,7 @@ const checkoutSchema = z.object({
   email: z.string()
     .email({ message: "Email invalide" })
     .optional()
-    .or(z.literal('')),
+    .or(z.literal('')), // ✅ Email optionnel
   
   address: z.string()
     .min(3, { message: "L'adresse doit contenir au moins 3 caractères" }),
@@ -51,23 +49,12 @@ const checkoutSchema = z.object({
     .regex(/^[0-9+\-\s()]*$/, { message: "Format de numéro invalide" }),
     
   deliveryZoneId: z.string().min(1, "Veuillez choisir une zone de livraison"),
-  deliveryAddressDetail: z.string().min(2, "Précisez votre quartier ou point de repère"),
+  deliveryAddressDetail: z.string().optional(), // ✅ Quartier optionnel
 });
 
 type CheckoutFormData = z.infer<typeof checkoutSchema>;
 
-interface PlaceOrderRequest {
-  cartId: string;
-  client: {
-    name: string;
-    email: string;
-    address: string;
-    phoneNumber: string;
-  };
-  orderItems: Array<{ productId: number; quantity: number }>;
-  deliveryZoneId: number;
-  deliveryAddressDetail: string;
-}
+
 
 const CheckoutPage = () => {
   const { cartId } = useParams<{ cartId: string }>();
@@ -77,7 +64,6 @@ const CheckoutPage = () => {
   
   const [formValues, setFormValues] = useState<Partial<CheckoutFormData>>({});
 
-  // 1️⃣ RÉCUPÉRATION DES DONNÉES (ZONES + PANIER)
   const { data: zonesData, isLoading: isZonesLoading } = useQuery({
     queryKey: ["delivery-zones"],
     queryFn: () => apiClient.getDeliveryZones(),
@@ -98,7 +84,6 @@ const CheckoutPage = () => {
     mode: "onTouched",
   });
 
-  // Surveillance des changements pour calculs en temps réel
   useEffect(() => {
     const subscription = form.watch((value) => {
       setFormValues(value as CheckoutFormData);
@@ -106,7 +91,6 @@ const CheckoutPage = () => {
     return () => subscription.unsubscribe();
   }, [form.watch]);
 
-  // 2️⃣ LOGIQUE DE CALCULS FINANCIERS
   const calculateSubtotal = () => {
     if (!cartData?.items) return 0;
     return cartData.items.reduce((sum, item) => sum + (item.totalCents || 0), 0);
@@ -121,34 +105,26 @@ const CheckoutPage = () => {
 
   const formatPrice = (cents: number) => cents.toLocaleString("fr-FR") + " FCFA";
 
-  // 3️⃣ WHATSAPP FORMATTING
   const buildWhatsAppMessage = (orderNumber?: string) => {
     const zone = (zonesData?.data || []).find((z: any) => z.id.toString() === formValues.deliveryZoneId);
-    const subtotal = formatPrice(calculateSubtotal());
-    const shipping = getSelectedZonePrice() === 0 ? 'À confirmer' : formatPrice(getSelectedZonePrice());
-    
     let message = `Bonjour, je souhaite confirmer ma commande. 🛒\n\n`;
     message += "*📋 INFOS LIVRAISON:*\n";
     message += `• Nom: ${formValues.name}\n`;
     message += `• Tél: ${formValues.phoneNumber}\n`;
+    message += `• Email: ${formValues.email || 'Non fourni'}\n`;
     message += `• Zone: ${zone?.name || 'N/A'}\n`;
-    message += `• Quartier: ${formValues.deliveryAddressDetail}\n\n`;
+    message += `• Quartier: ${formValues.deliveryAddressDetail || 'Non précisé'}\n\n`;
     
     message += "*📦 PRODUITS:*\n";
     cartData?.items?.forEach((item, i) => {
       message += `${i+1}. ${item.product.name} (x${item.quantity}) - ${formatPrice(item.totalCents)}\n`;
     });
     
-    message += `\n*💰 RÉCAPITULATIF:*`;
-    message += `\n• Sous-total: ${subtotal}`;
-    message += `\n• Livraison: ${shipping}`;
-    message += `\n• *TOTAL: ${formatPrice(calculateTotal())}*`;
-    
+    message += `\n*TOTAL: ${formatPrice(calculateTotal())}*`;
     if (orderNumber) message += `\n\n🆔 *Commande: #${orderNumber}*`;
     return encodeURIComponent(message);
   };
 
-  // 4️⃣ GESTION DE LA COMMANDE (MUTATION)
   const createOrderMutation = useMutation({
     mutationFn: (orderRequest: PlaceOrderRequest) => apiClient.createOrder(orderRequest),
     onSuccess: (data) => {
@@ -176,28 +152,69 @@ const CheckoutPage = () => {
       client: { name: data.name, email: data.email || '', address: data.address, phoneNumber: data.phoneNumber },
       orderItems: cartData.items.map(item => ({ productId: item.product.id, quantity: item.quantity })),
       deliveryZoneId: parseInt(data.deliveryZoneId),
-      deliveryAddressDetail: data.deliveryAddressDetail
+      deliveryAddressDetail: data.deliveryAddressDetail || '',
+      channel: "WEB"
     };
     createOrderMutation.mutate(orderRequest);
   };
 
-  const handleWhatsAppOnly = () => {
-    form.trigger().then((isValid) => {
-      if (isValid) {
-        window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${buildWhatsAppMessage()}`, '_blank');
-      } else {
-        toast({ title: "Veuillez remplir les champs obligatoires", variant: "destructive" });
+const handleWhatsAppOnly = async () => {
+  // 1. Déclencher la validation du formulaire
+  const isValid = await form.trigger();
+  
+  if (isValid) {
+    const data = form.getValues();
+    
+    // 2. Préparer l'objet de commande pour le backend
+    const orderRequest: PlaceOrderRequest = {
+      cartId: cartId!,
+      client: { 
+        name: data.name, 
+        email: data.email || '', 
+        address: data.address, 
+        phoneNumber: data.phoneNumber 
+      },
+      orderItems: cartData!.items.map(item => ({ 
+        productId: item.product.id, 
+        quantity: item.quantity 
+      })),
+      deliveryZoneId: parseInt(data.deliveryZoneId),
+      deliveryAddressDetail: data.deliveryAddressDetail || '',
+      channel: "WHATSAPP" 
+    };
+
+    // 3. Envoyer à l'API via la mutation existante
+    createOrderMutation.mutate(orderRequest, {
+      onSuccess: (response) => {
+        // 4. Une fois enregistré en base, on construit le message avec le vrai Numéro de Commande
+        const orderNumber = response.data?.orderNumber || response.data?.orderId;
+        const message = buildWhatsAppMessage(orderNumber);
+        
+        // 5. Ouvrir WhatsApp
+        window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${message}`, '_blank');
+        
+        toast({ title: "Commande enregistrée et WhatsApp ouvert ! ✅" });
+      },
+      onError: (error: any) => {
+        toast({ 
+          title: "Erreur lors de l'enregistrement", 
+          description: error.message, 
+          variant: "destructive" 
+        });
       }
     });
-  };
+
+  } else {
+    toast({ 
+      title: "Formulaire incomplet", 
+      description: "Veuillez remplir les champs obligatoires avant de passer sur WhatsApp.",
+      variant: "destructive" 
+    });
+  }
+};
 
   if (isCartLoading || isZonesLoading) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
-        <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" />
-        <p className="text-muted-foreground font-medium">Chargement de votre panier...</p>
-      </div>
-    );
+    return <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50"><Loader2 className="h-10 w-10 animate-spin text-primary mb-4" /><p>Chargement...</p></div>;
   }
 
   return (
@@ -205,98 +222,64 @@ const CheckoutPage = () => {
       <Header />
       <div className="container py-8 px-4 max-w-6xl mx-auto">
         <div className="flex flex-col lg:flex-row gap-8">
-          
-          {/* COLONNE GAUCHE - FORMULAIRE */}
           <div className="lg:w-2/3 space-y-6">
             <Card className="shadow-lg border-2">
               <CardHeader className="bg-primary/5 border-b">
-                <CardTitle className="text-2xl flex items-center gap-2">
-                  <ShoppingBag className="text-primary" /> Finaliser ma commande
-                </CardTitle>
-                <CardDescription>Renseignez vos coordonnées pour la livraison à domicile</CardDescription>
+                <CardTitle className="text-2xl flex items-center gap-2"><ShoppingBag className="text-primary" /> Finaliser ma commande</CardTitle>
+                <CardDescription>Renseignez vos coordonnées pour la livraison</CardDescription>
               </CardHeader>
               <CardContent className="pt-6">
                 <Form {...form}>
                   <form className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <FormField control={form.control} name="name" render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Nom complet *</FormLabel>
-                          <FormControl><div className="relative"><User className="absolute left-3 top-3 h-4 w-4 text-gray-400"/><Input className="pl-10" placeholder="Moussa Diop" {...field} /></div></FormControl>
-                          <FormMessage />
-                        </FormItem>
+                        <FormItem><FormLabel>Nom complet *</FormLabel><FormControl><div className="relative"><User className="absolute left-3 top-3 h-4 w-4 text-gray-400"/><Input className="pl-10" {...field} /></div></FormControl><FormMessage /></FormItem>
                       )} />
                       <FormField control={form.control} name="phoneNumber" render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Téléphone *</FormLabel>
-                          <FormControl><div className="relative"><Phone className="absolute left-3 top-3 h-4 w-4 text-gray-400"/><Input className="pl-10" placeholder="77XXXXXXX" {...field} /></div></FormControl>
-                          <FormMessage />
-                        </FormItem>
+                        <FormItem><FormLabel>Téléphone *</FormLabel><FormControl><div className="relative"><Phone className="absolute left-3 top-3 h-4 w-4 text-gray-400"/><Input className="pl-10" {...field} /></div></FormControl><FormMessage /></FormItem>
                       )} />
                     </div>
+
+                    <FormField control={form.control} name="email" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email (Optionnel)</FormLabel>
+                        <FormControl><div className="relative"><Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400"/><Input className="pl-10" placeholder="exemple@mail.com" {...field} /></div></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-blue-50/30 p-4 rounded-xl border border-blue-100/50">
                       <FormField control={form.control} name="deliveryZoneId" render={({ field }) => (
                         <FormItem>
                           <FormLabel className="text-blue-800">Zone de livraison *</FormLabel>
                           <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger className="bg-white"><SelectValue placeholder="Où livrer ?" /></SelectTrigger>
-                            </FormControl>
+                            <FormControl><SelectTrigger className="bg-white"><SelectValue placeholder="Où livrer ?" /></SelectTrigger></FormControl>
                             <SelectContent>
                               {(zonesData?.data || []).map((zone: any) => (
-                                <SelectItem key={zone.id} value={zone.id.toString()}>
-                                  {zone.name} (+{formatPrice(zone.price)})
-                                </SelectItem>
+                                <SelectItem key={zone.id} value={zone.id.toString()}>{zone.name} (+{formatPrice(zone.price)})</SelectItem>
                               ))}
                             </SelectContent>
-                          </Select>
-                          <FormMessage />
+                          </Select><FormMessage />
                         </FormItem>
                       )} />
                       <FormField control={form.control} name="deliveryAddressDetail" render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-blue-800">Quartier / Précision *</FormLabel>
+                          <FormLabel className="text-blue-800">Quartier / Précision (Optionnel)</FormLabel>
                           <FormControl><div className="relative"><MapPin className="absolute left-3 top-3 h-4 w-4 text-blue-400"/><Input className="pl-10 bg-white" placeholder="Ex: Cité Keur Gorgui" {...field} /></div></FormControl>
                           <FormMessage />
                         </FormItem>
                       )} />
-                      {formValues.deliveryZoneId && (
-                        <div className="col-span-1 md:col-span-2 mt-2">
-                          <Alert className="bg-white border-blue-100">
-                            <Info className="h-4 w-4 text-blue-500" />
-                            <AlertDescription className="text-xs text-blue-600">
-                              Quartiers couverts : {(zonesData?.data || []).find((z:any) => z.id.toString() === formValues.deliveryZoneId)?.areas}
-                            </AlertDescription>
-                          </Alert>
-                        </div>
-                      )}
                     </div>
 
                     <FormField control={form.control} name="address" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Adresse de résidence (Optionnel)</FormLabel>
-                        <FormControl><div className="relative"><Home className="absolute left-3 top-3 h-4 w-4 text-gray-400"/><Input className="pl-10" placeholder="Votre adresse habituelle" {...field} /></div></FormControl>
-                        <FormMessage />
-                      </FormItem>
+                      <FormItem><FormLabel>Adresse de résidence *</FormLabel><FormControl><div className="relative"><Home className="absolute left-3 top-3 h-4 w-4 text-gray-400"/><Input className="pl-10" placeholder="Ville, Rue..." {...field} /></div></FormControl><FormMessage /></FormItem>
                     )} />
 
                     <div className="space-y-4 pt-4 border-t">
-                      <Button 
-                        type="button" 
-                        className="w-full py-7 text-lg font-bold shadow-lg" 
-                        disabled={createOrderMutation.isPending}
-                        onClick={form.handleSubmit(handleFinalizeOrder)}
-                      >
-                        {createOrderMutation.isPending ? <Loader2 className="animate-spin mr-2" /> : <CheckCircle className="mr-2" />} 
-                        Confirmer la commande
+                      <Button type="button" className="w-full py-7 text-lg font-bold" disabled={createOrderMutation.isPending} onClick={form.handleSubmit(handleFinalizeOrder)}>
+                        {createOrderMutation.isPending ? <Loader2 className="animate-spin mr-2" /> : <CheckCircle className="mr-2" />} Confirmer la commande
                       </Button>
-                      <Button 
-                        type="button" 
-                        variant="outline" 
-                        className="w-full py-7 text-lg font-bold border-green-500 text-green-600 hover:bg-green-50" 
-                        onClick={handleWhatsAppOnly}
-                      >
+                      <Button type="button" variant="outline" className="w-full py-7 text-lg font-bold border-green-500 text-green-600 hover:bg-green-50" onClick={handleWhatsAppOnly}>
                         Commander via WhatsApp
                       </Button>
                     </div>
@@ -306,41 +289,22 @@ const CheckoutPage = () => {
             </Card>
           </div>
 
-          {/* COLONNE DROITE - RÉSUMÉ */}
           <div className="lg:w-1/3">
             <Card className="sticky top-8 shadow-xl border-primary/10">
-              <CardHeader className="bg-gray-50 border-b">
-                <CardTitle className="text-lg flex items-center gap-2"><Truck size={18}/> Récapitulatif</CardTitle>
-              </CardHeader>
+              <CardHeader className="bg-gray-50 border-b"><CardTitle className="text-lg flex items-center gap-2"><Truck size={18}/> Récapitulatif</CardTitle></CardHeader>
               <CardContent className="pt-6 space-y-4">
-                <div className="max-h-60 overflow-y-auto space-y-3 pr-2 custom-scrollbar">
+                <div className="max-h-60 overflow-y-auto space-y-3 pr-2">
                   {(cartData?.items || []).map((item) => (
                     <div key={item.id} className="flex justify-between text-sm border-b border-dashed pb-2">
-                      <span className="flex-1 pr-2 line-clamp-1">{item.product.name} <span className="text-muted-foreground text-xs">x{item.quantity}</span></span>
+                      <span className="flex-1 pr-2 line-clamp-1">{item.product.name} (x{item.quantity})</span>
                       <span className="font-medium whitespace-nowrap">{formatPrice(item.totalCents)}</span>
                     </div>
                   ))}
                 </div>
                 <div className="pt-4 space-y-3">
-                  <div className="flex justify-between text-gray-600">
-                    <span>Sous-total</span>
-                    <span>{formatPrice(calculateSubtotal())}</span>
-                  </div>
-                  <div className="flex justify-between text-blue-600 font-medium">
-                    <span>Livraison</span>
-                    <span>{formValues.deliveryZoneId ? `+ ${formatPrice(getSelectedZonePrice())}` : "Choisir une zone"}</span>
-                  </div>
-                  <div className="flex justify-between text-xl font-bold border-t pt-4 text-primary">
-                    <span>Total à payer</span>
-                    <span>{formatPrice(calculateTotal())}</span>
-                  </div>
-                </div>
-                <div className="bg-green-50 p-4 rounded-xl border border-green-100 flex items-start gap-3 mt-4">
-                   <ShieldCheck className="text-green-600 shrink-0" size={20}/>
-                   <div className="space-y-1">
-                     <p className="text-xs text-green-800 font-bold uppercase tracking-wider">Paiement Sécurisé</p>
-                     <p className="text-[10px] text-green-700">Réglez vos achats en toute sérénité au moment de la livraison.</p>
-                   </div>
+                  <div className="flex justify-between text-gray-600"><span>Sous-total</span><span>{formatPrice(calculateSubtotal())}</span></div>
+                  <div className="flex justify-between text-blue-600 font-medium"><span>Livraison</span><span>{formValues.deliveryZoneId ? `+ ${formatPrice(getSelectedZonePrice())}` : "Choisir zone"}</span></div>
+                  <div className="flex justify-between text-xl font-bold border-t pt-4 text-primary"><span>Total</span><span>{formatPrice(calculateTotal())}</span></div>
                 </div>
               </CardContent>
             </Card>
