@@ -104,6 +104,10 @@ export interface PaginatedResponse<T> {
       productId: number;
       quantity: number;
     }>;
+
+    // Ajout des champs de livraison
+  deliveryZoneId?: number;
+  deliveryAddressDetail?: string;
   }
 
   // Interface pour la réponse

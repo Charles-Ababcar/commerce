@@ -588,8 +588,31 @@ async deleteCategory(id: number) {
   });
 }
 
-//Users 
+// ---------- Delivery Zones ----------
 
+async getDeliveryZones() {
+  return this.request<any>('/delivery-zones');
+}
+
+async createDeliveryZone(data: { name: string; areas: string; price: number }) {
+  return this.request<any>('/delivery-zones', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+async updateDeliveryZone(id: number, data: { name: string; areas: string; price: number }) {
+  return this.request<any>(`/delivery-zones/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
+async deleteDeliveryZone(id: number) {
+  return this.request<any>(`/delivery-zones/${id}`, {
+    method: 'DELETE',
+  });
+}
 
 }
 

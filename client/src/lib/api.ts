@@ -257,6 +257,12 @@ async clearCart(cartId: number | any) {
     await this.request('/auth/logout', { method: 'POST' });
     this.handleLogout();
   }
+
+
+  // ==================== LIVRAISON ====================
+async getDeliveryZones(): Promise<ApiResponse<any>> {
+  return this.request(`/delivery-zones`);
+}
 }
 
 export const apiClient = new ApiClient();

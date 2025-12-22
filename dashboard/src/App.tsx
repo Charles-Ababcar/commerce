@@ -17,6 +17,7 @@ import ListUsers from "./pages/users/Users";
 import ForgotPassword from "./pages/ForgetPassword";
 import ResetPassword from "./pages/resetPassword";
 import RequestAccess from "./pages/RequestAccess";
+import DeliveryZones from "./pages/deliveryZone/DeliveryZones";
 const queryClient = new QueryClient();
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -49,11 +50,12 @@ const App = () => (
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/shop" element={<ProtectedRoute><Shop /></ProtectedRoute>} />
             <Route path="/category" element={<ProtectedRoute><CategoryList /></ProtectedRoute>} />
-             <Route path="/forgot-password" element={<ForgotPassword />} />
-             <Route path="/reset-password" element={<ResetPassword />} />
-                <Route path="/request-access" element={<RequestAccess />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/request-access" element={<RequestAccess />} />
             <Route path="/" element={<Navigate to="/dashboard" />} />
             <Route path="*" element={<NotFound />} />
+               <Route path="/deliver-zones" element={<DeliveryZones />} />
           </Routes>
         </BrowserRouter>
       </TooltipProvider>
