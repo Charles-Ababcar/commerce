@@ -17,7 +17,8 @@ import {
   Truck,
   ShieldCheck,
   MapPin,
-  Info
+  Info,
+  MessageCircle
 } from "lucide-react";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -39,7 +40,7 @@ const checkoutSchema = z.object({
   email: z.string()
     .email({ message: "Email invalide" })
     .optional()
-    .or(z.literal('')), // ✅ Email optionnel
+    .or(z.literal('')), 
   
   address: z.string()
     .min(3, { message: "L'adresse doit contenir au moins 3 caractères" }),
@@ -49,12 +50,10 @@ const checkoutSchema = z.object({
     .regex(/^[0-9+\-\s()]*$/, { message: "Format de numéro invalide" }),
     
   deliveryZoneId: z.string().min(1, "Veuillez choisir une zone de livraison"),
-  deliveryAddressDetail: z.string().optional(), // ✅ Quartier optionnel
+  deliveryAddressDetail: z.string().optional(), 
 });
 
 type CheckoutFormData = z.infer<typeof checkoutSchema>;
-
-
 
 const CheckoutPage = () => {
   const { cartId } = useParams<{ cartId: string }>();
@@ -96,9 +95,10 @@ const CheckoutPage = () => {
     return cartData.items.reduce((sum, item) => sum + (item.totalCents || 0), 0);
   };
 
+  const selectedZone = (zonesData?.data || []).find((z: any) => z.id.toString() === formValues.deliveryZoneId);
+
   const getSelectedZonePrice = () => {
-    const zone = (zonesData?.data || []).find((z: any) => z.id.toString() === formValues.deliveryZoneId);
-    return zone ? zone.price : 0;
+    return selectedZone ? selectedZone.price : 0;
   };
 
   const calculateTotal = () => calculateSubtotal() + getSelectedZonePrice();
@@ -106,13 +106,12 @@ const CheckoutPage = () => {
   const formatPrice = (cents: number) => cents.toLocaleString("fr-FR") + " FCFA";
 
   const buildWhatsAppMessage = (orderNumber?: string) => {
-    const zone = (zonesData?.data || []).find((z: any) => z.id.toString() === formValues.deliveryZoneId);
     let message = `Bonjour, je souhaite confirmer ma commande. 🛒\n\n`;
     message += "*📋 INFOS LIVRAISON:*\n";
     message += `• Nom: ${formValues.name}\n`;
     message += `• Tél: ${formValues.phoneNumber}\n`;
     message += `• Email: ${formValues.email || 'Non fourni'}\n`;
-    message += `• Zone: ${zone?.name || 'N/A'}\n`;
+    message += `• Zone: ${selectedZone?.name || 'N/A'}\n`;
     message += `• Quartier: ${formValues.deliveryAddressDetail || 'Non précisé'}\n\n`;
     
     message += "*📦 PRODUITS:*\n";
@@ -158,63 +157,31 @@ const CheckoutPage = () => {
     createOrderMutation.mutate(orderRequest);
   };
 
-const handleWhatsAppOnly = async () => {
-  // 1. Déclencher la validation du formulaire
-  const isValid = await form.trigger();
-  
-  if (isValid) {
-    const data = form.getValues();
-    
-    // 2. Préparer l'objet de commande pour le backend
-    const orderRequest: PlaceOrderRequest = {
-      cartId: cartId!,
-      client: { 
-        name: data.name, 
-        email: data.email || '', 
-        address: data.address, 
-        phoneNumber: data.phoneNumber 
-      },
-      orderItems: cartData!.items.map(item => ({ 
-        productId: item.product.id, 
-        quantity: item.quantity 
-      })),
-      deliveryZoneId: parseInt(data.deliveryZoneId),
-      deliveryAddressDetail: data.deliveryAddressDetail || '',
-      channel: "WHATSAPP" 
-    };
+  const handleWhatsAppOnly = async () => {
+    const isValid = await form.trigger();
+    if (isValid) {
+      const data = form.getValues();
+      const orderRequest: PlaceOrderRequest = {
+        cartId: cartId!,
+        client: { name: data.name, email: data.email || '', address: data.address, phoneNumber: data.phoneNumber },
+        orderItems: cartData!.items.map(item => ({ productId: item.product.id, quantity: item.quantity })),
+        deliveryZoneId: parseInt(data.deliveryZoneId),
+        deliveryAddressDetail: data.deliveryAddressDetail || '',
+        channel: "WHATSAPP" 
+      };
 
-    // 3. Envoyer à l'API via la mutation existante
-    createOrderMutation.mutate(orderRequest, {
-      onSuccess: (response) => {
-        // 4. Une fois enregistré en base, on construit le message avec le vrai Numéro de Commande
-        const orderNumber = response.data?.orderNumber || response.data?.orderId;
-        const message = buildWhatsAppMessage(orderNumber);
-        
-        // 5. Ouvrir WhatsApp
-        window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${message}`, '_blank');
-        
-        toast({ title: "Commande enregistrée et WhatsApp ouvert ! ✅" });
-      },
-      onError: (error: any) => {
-        toast({ 
-          title: "Erreur lors de l'enregistrement", 
-          description: error.message, 
-          variant: "destructive" 
-        });
-      }
-    });
-
-  } else {
-    toast({ 
-      title: "Formulaire incomplet", 
-      description: "Veuillez remplir les champs obligatoires avant de passer sur WhatsApp.",
-      variant: "destructive" 
-    });
-  }
-};
+      createOrderMutation.mutate(orderRequest, {
+        onSuccess: (response) => {
+          const orderNumber = response.data?.orderNumber || response.data?.orderId;
+          const message = buildWhatsAppMessage(orderNumber);
+          window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${message}`, '_blank');
+        }
+      });
+    }
+  };
 
   if (isCartLoading || isZonesLoading) {
-    return <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50"><Loader2 className="h-10 w-10 animate-spin text-primary mb-4" /><p>Chargement...</p></div>;
+    return <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50"><Loader2 className="h-10 w-10 animate-spin text-primary mb-4" /><p>Chargement de votre commande...</p></div>;
   }
 
   return (
@@ -226,17 +193,17 @@ const handleWhatsAppOnly = async () => {
             <Card className="shadow-lg border-2">
               <CardHeader className="bg-primary/5 border-b">
                 <CardTitle className="text-2xl flex items-center gap-2"><ShoppingBag className="text-primary" /> Finaliser ma commande</CardTitle>
-                <CardDescription>Renseignez vos coordonnées pour la livraison</CardDescription>
+                <CardDescription>Renseignez vos coordonnées pour la livraison à domicile</CardDescription>
               </CardHeader>
               <CardContent className="pt-6">
                 <Form {...form}>
                   <form className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <FormField control={form.control} name="name" render={({ field }) => (
-                        <FormItem><FormLabel>Nom complet *</FormLabel><FormControl><div className="relative"><User className="absolute left-3 top-3 h-4 w-4 text-gray-400"/><Input className="pl-10" {...field} /></div></FormControl><FormMessage /></FormItem>
+                        <FormItem><FormLabel>Nom complet *</FormLabel><FormControl><div className="relative"><User className="absolute left-3 top-3 h-4 w-4 text-gray-400"/><Input className="pl-10" placeholder="Moussa Diop" {...field} /></div></FormControl><FormMessage /></FormItem>
                       )} />
                       <FormField control={form.control} name="phoneNumber" render={({ field }) => (
-                        <FormItem><FormLabel>Téléphone *</FormLabel><FormControl><div className="relative"><Phone className="absolute left-3 top-3 h-4 w-4 text-gray-400"/><Input className="pl-10" {...field} /></div></FormControl><FormMessage /></FormItem>
+                        <FormItem><FormLabel>Téléphone *</FormLabel><FormControl><div className="relative"><Phone className="absolute left-3 top-3 h-4 w-4 text-gray-400"/><Input className="pl-10" placeholder="77XXXXXXX" {...field} /></div></FormControl><FormMessage /></FormItem>
                       )} />
                     </div>
 
@@ -248,39 +215,56 @@ const handleWhatsAppOnly = async () => {
                       </FormItem>
                     )} />
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-blue-50/30 p-4 rounded-xl border border-blue-100/50">
-                      <FormField control={form.control} name="deliveryZoneId" render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-blue-800">Zone de livraison *</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl><SelectTrigger className="bg-white"><SelectValue placeholder="Où livrer ?" /></SelectTrigger></FormControl>
-                            <SelectContent>
-                              {(zonesData?.data || []).map((zone: any) => (
-                                <SelectItem key={zone.id} value={zone.id.toString()}>{zone.name} (+{formatPrice(zone.price)})</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select><FormMessage />
-                        </FormItem>
-                      )} />
-                      <FormField control={form.control} name="deliveryAddressDetail" render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-blue-800">Quartier / Précision (Optionnel)</FormLabel>
-                          <FormControl><div className="relative"><MapPin className="absolute left-3 top-3 h-4 w-4 text-blue-400"/><Input className="pl-10 bg-white" placeholder="Ex: Cité Keur Gorgui" {...field} /></div></FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )} />
+                    <div className="bg-blue-50/50 p-5 rounded-2xl border border-blue-100 space-y-4">
+                      <h3 className="text-sm font-bold text-blue-800 flex items-center gap-2 uppercase tracking-wider">
+                        <Truck size={16} /> Mode de Livraison
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField control={form.control} name="deliveryZoneId" render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-blue-900">Zone de livraison *</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl><SelectTrigger className="bg-white border-blue-200"><SelectValue placeholder="Sélectionner votre zone" /></SelectTrigger></FormControl>
+                              <SelectContent>
+                                {(zonesData?.data || []).map((zone: any) => (
+                                  <SelectItem key={zone.id} value={zone.id.toString()}>{zone.name} (+{formatPrice(zone.price)})</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select><FormMessage />
+                          </FormItem>
+                        )} />
+                        <FormField control={form.control} name="deliveryAddressDetail" render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-blue-900">Quartier / Précision (Optionnel)</FormLabel>
+                            <FormControl><div className="relative"><MapPin className="absolute left-3 top-3 h-4 w-4 text-blue-400"/><Input className="pl-10 bg-white border-blue-200" placeholder="Ex: Derrière la boulangerie" {...field} /></div></FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )} />
+                      </div>
+
+                      {/* ✅ AFFICHAGE DES VILLES/QUARTIERS COUVERTS */}
+                      {selectedZone && (
+                        <Alert className="bg-white/80 border-blue-200 animate-in fade-in slide-in-from-top-1">
+                          <Info className="h-4 w-4 text-blue-600" />
+                          <AlertDescription className="text-blue-700 text-xs leading-relaxed">
+                            <span className="font-bold">Quartiers couverts : </span>
+                            {selectedZone.areas}
+                          </AlertDescription>
+                        </Alert>
+                      )}
                     </div>
 
                     <FormField control={form.control} name="address" render={({ field }) => (
-                      <FormItem><FormLabel>Adresse de résidence *</FormLabel><FormControl><div className="relative"><Home className="absolute left-3 top-3 h-4 w-4 text-gray-400"/><Input className="pl-10" placeholder="Ville, Rue..." {...field} /></div></FormControl><FormMessage /></FormItem>
+                      <FormItem><FormLabel>Adresse de résidence actuelle *</FormLabel><FormControl><div className="relative"><Home className="absolute left-3 top-3 h-4 w-4 text-gray-400"/><Input className="pl-10" placeholder="Ville, Rue, Porte..." {...field} /></div></FormControl><FormMessage /></FormItem>
                     )} />
 
                     <div className="space-y-4 pt-4 border-t">
-                      <Button type="button" className="w-full py-7 text-lg font-bold" disabled={createOrderMutation.isPending} onClick={form.handleSubmit(handleFinalizeOrder)}>
-                        {createOrderMutation.isPending ? <Loader2 className="animate-spin mr-2" /> : <CheckCircle className="mr-2" />} Confirmer la commande
+                      <Button type="button" className="w-full py-7 text-lg font-bold shadow-lg" disabled={createOrderMutation.isPending} onClick={form.handleSubmit(handleFinalizeOrder)}>
+                        {createOrderMutation.isPending ? <Loader2 className="animate-spin mr-2" /> : <CheckCircle className="mr-2" />} 
+                        Confirmer la commande
                       </Button>
                       <Button type="button" variant="outline" className="w-full py-7 text-lg font-bold border-green-500 text-green-600 hover:bg-green-50" onClick={handleWhatsAppOnly}>
-                        Commander via WhatsApp
+                        <MessageCircle className="mr-2" /> Commander via WhatsApp
                       </Button>
                     </div>
                   </form>
@@ -290,21 +274,36 @@ const handleWhatsAppOnly = async () => {
           </div>
 
           <div className="lg:w-1/3">
-            <Card className="sticky top-8 shadow-xl border-primary/10">
-              <CardHeader className="bg-gray-50 border-b"><CardTitle className="text-lg flex items-center gap-2"><Truck size={18}/> Récapitulatif</CardTitle></CardHeader>
+            <Card className="sticky top-8 shadow-xl border-primary/10 overflow-hidden">
+              <CardHeader className="bg-gray-50 border-b">
+                <CardTitle className="text-lg flex items-center gap-2"><Truck size={18}/> Récapitulatif</CardTitle>
+              </CardHeader>
               <CardContent className="pt-6 space-y-4">
-                <div className="max-h-60 overflow-y-auto space-y-3 pr-2">
+                <div className="max-h-60 overflow-y-auto space-y-3 pr-2 custom-scrollbar">
                   {(cartData?.items || []).map((item) => (
                     <div key={item.id} className="flex justify-between text-sm border-b border-dashed pb-2">
-                      <span className="flex-1 pr-2 line-clamp-1">{item.product.name} (x{item.quantity})</span>
+                      <span className="flex-1 pr-2 line-clamp-1">{item.product.name} <span className="text-muted-foreground text-xs">x{item.quantity}</span></span>
                       <span className="font-medium whitespace-nowrap">{formatPrice(item.totalCents)}</span>
                     </div>
                   ))}
                 </div>
                 <div className="pt-4 space-y-3">
-                  <div className="flex justify-between text-gray-600"><span>Sous-total</span><span>{formatPrice(calculateSubtotal())}</span></div>
-                  <div className="flex justify-between text-blue-600 font-medium"><span>Livraison</span><span>{formValues.deliveryZoneId ? `+ ${formatPrice(getSelectedZonePrice())}` : "Choisir zone"}</span></div>
-                  <div className="flex justify-between text-xl font-bold border-t pt-4 text-primary"><span>Total</span><span>{formatPrice(calculateTotal())}</span></div>
+                  <div className="flex justify-between text-gray-600 text-sm"><span>Sous-total</span><span>{formatPrice(calculateSubtotal())}</span></div>
+                  <div className="flex justify-between text-blue-600 text-sm font-medium">
+                    <span>Livraison ({selectedZone?.name || "Non choisie"})</span>
+                    <span>{formValues.deliveryZoneId ? `+ ${formatPrice(getSelectedZonePrice())}` : "---"}</span>
+                  </div>
+                  <div className="flex justify-between text-xl font-bold border-t pt-4 text-primary">
+                    <span>Total à payer</span>
+                    <span>{formatPrice(calculateTotal())}</span>
+                  </div>
+                </div>
+                <div className="bg-green-50 p-4 rounded-xl border border-green-100 flex items-start gap-3 mt-4">
+                   <ShieldCheck className="text-green-600 shrink-0" size={20}/>
+                   <div>
+                     <p className="text-[10px] font-bold text-green-800 uppercase">Paiement Sécurisé</p>
+                     <p className="text-[10px] text-green-700">Réglez en espèces ou par mobile money lors de la livraison.</p>
+                   </div>
                 </div>
               </CardContent>
             </Card>
