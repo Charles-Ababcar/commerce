@@ -23,7 +23,6 @@ import {
   Download,
   Filter,
   Activity,
-  Target,
   Truck,
 } from "lucide-react";
 import { apiClient } from "@/lib/api";
@@ -53,29 +52,18 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Progress } from "@/components/ui/progress";
-import {
-  DashboardStats,
-  RecentOrder,
-  SalesTrend,
-  TopProduct,
-} from "@/types/api";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { DashboardStats, RecentOrder, SalesTrend } from "@/types/api";
 import { AllOrdersDialog } from "./AllOrdersDialog";
 
-// --- HELPERS ---
-const getWeekNumber = (date: Date): number => {
-  const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
-  const pastDaysOfYear = (date.getTime() - firstDayOfYear.getTime()) / 86400000;
-  return Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
+// --- CONFIGURATION DU GRAPHIQUE ---
+const chartConfig = {
+  revenue: {
+    label: "Revenu",
+    color: "#0ea5e9",
+  },
 };
 
+// --- HELPERS ---
 const formatXOF = (amount: number | any) => {
   return new Intl.NumberFormat("fr-SN", {
     style: "currency",
@@ -94,25 +82,19 @@ const formatDateTime = (dateString: string) => {
   });
 };
 
-const CHART_COLORS = ["#0ea5e9", "#10b981", "#f59e0b", "#6366f1", "#ec4899"];
-
 export default function Dashboard() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("overview");
   const [filters, setFilters] = useState({
     period: "daily",
-    dateRange: "30days",
     startDate: "",
     endDate: "",
     page: 0,
-    size: 10,
   });
 
-  const [isFullReportOpen, setIsFullReportOpen] = useState(false);
   const [isAllOrdersOpen, setIsAllOrdersOpen] = useState(false);
-  const [isAllProductsOpen, setIsAllProductsOpen] = useState(false);
 
-  // Initialisation des dates
+  // Initialisation des dates (30 derniers jours)
   useEffect(() => {
     const end = new Date();
     const start = new Date();
@@ -125,7 +107,7 @@ export default function Dashboard() {
   }, []);
 
   // --- QUERIES ---
-  const { data: generalData, isLoading: isLoadingGeneral, error: generalError } = useQuery<DashboardStats>({
+  const { data: generalData, isLoading: isLoadingGeneral } = useQuery<DashboardStats>({
     queryKey: ["dashboardGeneral", filters.startDate, filters.endDate],
     queryFn: () => apiClient.getGeneralDashboard({
       startDate: filters.startDate ? new Date(filters.startDate) : undefined,
@@ -135,12 +117,7 @@ export default function Dashboard() {
 
   const { data: recentOrdersData, isLoading: isLoadingOrders } = useQuery({
     queryKey: ["dashboardRecentOrders", filters.page],
-    queryFn: () => apiClient.getRecentOrders({ page: filters.page, size: 5 }),
-  });
-
-  const { data: topProductsData, isLoading: isLoadingTopProducts } = useQuery({
-    queryKey: ["dashboardTopProducts", filters.startDate],
-    queryFn: () => apiClient.getTopProducts({ size: 5 }),
+    queryFn: () => apiClient.getRecentOrders({ page: filters.page, size: 6 }),
   });
 
   const { data: salesTrendsData, isLoading: isLoadingSalesTrends } = useQuery({
@@ -148,21 +125,16 @@ export default function Dashboard() {
     queryFn: () => apiClient.getSalesTrends({ type: filters.period }),
   });
 
-  // Extraction des données
-  const stats = generalData?.data || {};
+  const stats = generalData?.data || generalData || {};
   
-  // LOGIQUE LIVRAISON : Si votre backend envoie totalRevenue (Produits + Livraisons)
-  // On peut estimer le net ici ou afficher le brut selon votre besoin.
-  const netRevenue = stats.totalRevenue || 0; 
-  const deliveryRevenue = stats.totalDeliveryRevenue || 0; // Champ ajouté précédemment au DTO
-
+  // STATISTIQUES POUR LES CARTES
   const keyStats = [
     {
       title: "Chiffre d'Affaires",
-      value: formatXOF(netRevenue),
+      value: formatXOF(stats.totalRevenue),
       icon: DollarSign,
       change: stats.trends?.revenueGrowth || 0,
-      description: "Revenu net (hors livraisons)",
+      description: "Revenu net des produits",
       color: "bg-blue-500",
     },
     {
@@ -175,10 +147,10 @@ export default function Dashboard() {
     },
     {
       title: "Frais de Livraison",
-      value: formatXOF(deliveryRevenue),
+      value: formatXOF(stats.totalDeliveryRevenue || 0),
       icon: Truck,
       change: 0,
-      description: "Collectés pour les livreurs",
+      description: "Total collecté (Zone 1-3)",
       color: "bg-orange-500",
     },
     {
@@ -186,7 +158,7 @@ export default function Dashboard() {
       value: formatXOF(stats.averageOrderValue || 0),
       icon: CreditCard,
       change: stats.trends?.conversionGrowth || 0,
-      description: "Valeur moyenne par panier",
+      description: "Moyenne par client",
       color: "bg-purple-500",
     },
   ];
@@ -201,7 +173,7 @@ export default function Dashboard() {
       <AllOrdersDialog open={isAllOrdersOpen} onOpenChange={setIsAllOrdersOpen} filters={filters} />
 
       <div className="space-y-6">
-        {/* Header Section */}
+        {/* HEADER */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Tableau de Bord</h1>
@@ -217,10 +189,10 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Stats Grid */}
+        {/* CARTES STATISTIQUES */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {keyStats.map((stat, i) => (
-            <Card key={i} className="overflow-hidden border-none shadow-md">
+            <Card key={i} className="shadow-sm border-none">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div className={`p-2 rounded-lg ${stat.color} text-white`}>
@@ -244,7 +216,7 @@ export default function Dashboard() {
           ))}
         </div>
 
-        {/* Charts & Tables */}
+        {/* GRAPHique ET DERNIERES VENTES */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <Card className="lg:col-span-2 shadow-sm">
             <CardHeader className="flex flex-row items-center justify-between">
@@ -256,22 +228,24 @@ export default function Dashboard() {
                 {isLoadingSalesTrends ? (
                   <Skeleton className="h-full w-full" />
                 ) : (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={formattedTrends}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                      <XAxis dataKey="name" axisLine={false} tickLine={false} fontSize={12} dy={10} />
-                      <YAxis axisLine={false} tickLine={false} fontSize={12} tickFormatter={(val) => `${val/1000}k`} />
-                      <ChartTooltip content={<ChartTooltipContent />} />
-                      <Line 
-                        type="monotone" 
-                        dataKey="revenue" 
-                        stroke="#0ea5e9" 
-                        strokeWidth={3} 
-                        dot={{ r: 4, fill: "#0ea5e9" }} 
-                        activeDot={{ r: 6 }} 
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
+                  <ChartContainer config={chartConfig} className="h-full w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={formattedTrends}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                        <XAxis dataKey="name" axisLine={false} tickLine={false} fontSize={12} dy={10} />
+                        <YAxis axisLine={false} tickLine={false} fontSize={12} />
+                        <ChartTooltip content={<ChartTooltipContent />} />
+                        <Line 
+                          type="monotone" 
+                          dataKey="revenue" 
+                          stroke="var(--color-revenue)" 
+                          strokeWidth={3} 
+                          dot={{ r: 4, fill: "var(--color-revenue)" }} 
+                          activeDot={{ r: 6 }} 
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </ChartContainer>
                 )}
               </div>
             </CardContent>
@@ -280,35 +254,31 @@ export default function Dashboard() {
           <Card className="shadow-sm">
             <CardHeader>
               <CardTitle className="text-lg">Dernières Ventes</CardTitle>
-              <CardDescription>Mise à jour en temps réel</CardDescription>
+              <CardDescription>Journal des activités</CardDescription>
             </CardHeader>
             <CardContent className="p-0">
               <div className="divide-y divide-gray-100">
                 {isLoadingOrders ? (
                   <div className="p-4 space-y-4">
-                    <Skeleton className="h-12 w-full" />
-                    <Skeleton className="h-12 w-full" />
+                    <Skeleton className="h-12 w-full" /><Skeleton className="h-12 w-full" />
                   </div>
                 ) : (
-                  recentOrdersData?.content?.slice(0, 6).map((order: RecentOrder) => (
+                  recentOrdersData?.content?.map((order: RecentOrder) => (
                     <div key={order.orderId} className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 text-xs font-bold">
+                        <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 text-[10px] font-bold">
                           {order.customerName?.charAt(0) || "C"}
                         </div>
                         <div>
-                          <p className="text-xs font-bold truncate max-w-[120px]">{order.customerName}</p>
+                          <p className="text-xs font-bold truncate max-w-[100px]">{order.customerName}</p>
                           <p className="text-[10px] text-muted-foreground">{formatDateTime(order.createdAt)}</p>
                         </div>
                       </div>
                       <div className="text-right">
                         <p className="text-xs font-bold">{formatXOF(order.total)}</p>
-                        <Badge 
-                          className={`text-[9px] px-1 h-4 ${
-                            order.status === 'CANCELLED' ? 'bg-red-100 text-red-700' : 
-                            order.status === 'DELIVERED' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'
-                          }`}
-                        >
+                        <Badge className={`text-[8px] px-1 h-4 ${
+                          order.status === 'CANCELLED' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
+                        }`}>
                           {order.status}
                         </Badge>
                       </div>
@@ -317,20 +287,15 @@ export default function Dashboard() {
                 )}
               </div>
             </CardContent>
-            <CardFooter className="pt-2">
-              <Button variant="ghost" size="sm" className="w-full text-xs" onClick={() => setIsAllOrdersOpen(true)}>
-                Voir tout le journal
-              </Button>
-            </CardFooter>
           </Card>
         </div>
 
-        {/* Filters & Range */}
+        {/* FILTRES DE DATE */}
         <Card className="bg-muted/30 border-dashed">
           <CardContent className="p-4 flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="flex items-center gap-2">
               <Filter size={16} className="text-muted-foreground" />
-              <span className="text-sm font-medium">Analyse personnalisée :</span>
+              <span className="text-sm font-medium">Filtrer par date :</span>
             </div>
             <div className="flex gap-2">
                <Input 
