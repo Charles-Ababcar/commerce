@@ -590,8 +590,8 @@ async deleteCategory(id: number) {
 
 // ---------- Delivery Zones ----------
 
-async getDeliveryZones() {
-  return this.request<any>('/delivery-zones');
+async getDeliveryZones(page: number = 0, size: number = 10) {
+  return this.request<any>(`/delivery-zones?page=${page}&size=${size}`);
 }
 
 async createDeliveryZone(data: { name: string; areas: string; price: number }) {
