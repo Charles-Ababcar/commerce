@@ -7,7 +7,6 @@ import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { 
   Loader2, 
-  Package, 
   User, 
   Mail, 
   Home, 
@@ -27,7 +26,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api";
-import { Cart, CartItem, PlaceOrderRequest } from "@/types/api";
+import { Cart, PlaceOrderRequest } from "@/types/api";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const WHATSAPP_NUMBER = "221776562121";
