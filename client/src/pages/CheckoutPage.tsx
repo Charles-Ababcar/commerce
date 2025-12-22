@@ -785,7 +785,6 @@ import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
@@ -798,10 +797,8 @@ import {
   Phone, 
   CheckCircle, 
   ShoppingBag,
-  CreditCard,
   Truck,
   ShieldCheck,
-  Banknote,
   MapPin
 } from "lucide-react";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
@@ -814,10 +811,10 @@ import { apiClient } from "@/lib/api";
 import { Cart, CartItem } from "@/types/api";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-// 🚨 Numéro de l'entreprise pour WhatsApp (sans + ni espaces)
+// 🚨 Numéro de l'entreprise pour WhatsApp
 const WHATSAPP_NUMBER = "221776562121";
 
-// 🚨 Schéma de validation
+// 🚨 Schéma de validation mis à jour avec la livraison
 const checkoutSchema = z.object({
   name: z.string()
     .min(2, { message: "Le nom doit contenir au moins 2 caractères" })
@@ -829,18 +826,14 @@ const checkoutSchema = z.object({
     .or(z.literal('')),
   
   address: z.string()
-    .min(3, { message: "L'adresse doit contenir au moins 3 caractères" })
-    .max(200, { message: "L'adresse ne doit pas dépasser 200 caractères" }),
+    .min(3, { message: "L'adresse doit contenir au moins 3 caractères" }),
     
   phoneNumber: z.string()
     .min(7, { message: "Le numéro doit contenir au moins 7 chiffres" })
-    .max(20, { message: "Le numéro ne doit pas dépasser 20 caractères" })
-    .regex(/^[0-9+\-\s()]*$/, { 
-      message: "Caractères autorisés: chiffres, +, -, espaces, ()" 
-    }),
-    
+    .regex(/^[0-9+\-\s()]*$/, { message: "Numéro invalide" }),
+
   deliveryZoneId: z.string().min(1, "Veuillez choisir une zone de livraison"),
-  deliveryAddressDetail: z.string().min(2, "Précisez votre quartier"),
+  deliveryAddressDetail: z.string().min(2, "Précisez votre quartier ou point de repère"),
 });
 
 type CheckoutFormData = z.infer<typeof checkoutSchema>;
@@ -853,10 +846,7 @@ interface PlaceOrderRequest {
     address: string;
     phoneNumber: string;
   };
-  orderItems: Array<{
-    productId: number;
-    quantity: number;
-  }>;
+  orderItems: Array<{ productId: number; quantity: number }>;
   deliveryZoneId: number;
   deliveryAddressDetail: string;
 }
@@ -867,22 +857,14 @@ const CheckoutPage = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
-  const [formValues, setFormValues] = useState<CheckoutFormData>({
-    name: '',
-    email: '',
-    address: '',
-    phoneNumber: '',
-    deliveryZoneId: '',
-    deliveryAddressDetail: ''
-  });
+  const [formValues, setFormValues] = useState<Partial<CheckoutFormData>>({});
 
-  // 1️⃣ RÉCUPÉRATION DES ZONES DE LIVRAISON
+  // 1️⃣ RÉCUPÉRATION DES ZONES ET DU PANIER
   const { data: zonesData, isLoading: isZonesLoading } = useQuery({
     queryKey: ["delivery-zones"],
     queryFn: () => apiClient.getDeliveryZones(),
   });
   
-  // Récupération du panier
   const { data: cartData, isLoading: isCartLoading } = useQuery<Cart, Error>({
     queryKey: ["cart", cartId],
     queryFn: () => apiClient.getCart(cartId!),
@@ -892,32 +874,26 @@ const CheckoutPage = () => {
   const form = useForm<CheckoutFormData>({
     resolver: zodResolver(checkoutSchema),
     defaultValues: {
-      name: '',
-      email: '',
-      address: '',
-      phoneNumber: '',
-      deliveryZoneId: '', 
-      deliveryAddressDetail: ''
+      name: '', email: '', address: '', phoneNumber: '',
+      deliveryZoneId: '', deliveryAddressDetail: ''
     },
     mode: "onTouched",
   });
 
-  // Surveillance des changements
   useEffect(() => {
-    const subscription = form.watch((value) => {
-      setFormValues(value as CheckoutFormData);
-    });
+    const subscription = form.watch((value) => setFormValues(value as CheckoutFormData));
     return () => subscription.unsubscribe();
   }, [form.watch]);
+
+  // 2️⃣ LOGIQUE DE CALCULS
+  const calculateSubtotal = () => {
+    if (!cartData?.items) return 0;
+    return cartData.items.reduce((sum, item) => sum + (item.totalCents || 0), 0);
+  };
 
   const getSelectedZonePrice = () => {
     const zone = zonesData?.data?.find((z: any) => z.id.toString() === formValues.deliveryZoneId);
     return zone ? zone.price : 0;
-  };
-
-  const calculateSubtotal = () => {
-    if (!cartData?.items) return 0;
-    return cartData.items.reduce((sum, item) => sum + (item.totalCents || 0), 0);
   };
 
   const calculateTotal = () => {
@@ -928,46 +904,38 @@ const CheckoutPage = () => {
     return cents.toLocaleString("fr-FR") + " FCFA";
   };
 
+  // 3️⃣ WHATSAPP LOGIC
   const formatProductsForWhatsApp = () => {
-    if (!cartData?.items || cartData.items.length === 0) return "";
-    let productsText = "\n\n📦 *PRODUITS COMMANDÉS:*\n";
+    if (!cartData?.items) return "";
+    let text = "\n\n📦 *PRODUITS COMMANDÉS:*\n";
     cartData.items.forEach((item, index) => {
-      productsText += `\n${index + 1}. *${item.product.name}*\n`;
-      productsText += `   📦 Qté: ${item.quantity} | 💰 Total: ${formatPrice(item.totalCents)}\n`;
+      text += `\n${index + 1}. *${item.product.name}*\n`;
+      text += `   Qté: ${item.quantity} | Total: ${formatPrice(item.totalCents)}\n`;
     });
-    return productsText;
+    return text;
   };
 
   const buildWhatsAppMessage = (orderNumber?: string) => {
     const zone = zonesData?.data?.find((z: any) => z.id.toString() === formValues.deliveryZoneId);
-    const shipping = getSelectedZonePrice() === 0 ? 'GRATUITE' : formatPrice(getSelectedZonePrice());
-    
     let message = `Bonjour, je souhaite confirmer ma commande. 🛒\n\n`;
     message += "*📋 INFOS LIVRAISON:*\n";
-    message += `• 👤 Nom: ${formValues.name}\n`;
-    message += `• 📞 Tél: ${formValues.phoneNumber}\n`;
-    message += `• 📍 Zone: ${zone?.name || 'Non précisée'}\n`;
-    message += `• 🏠 Quartier/Précision: ${formValues.deliveryAddressDetail}\n`;
-    message += `• 📧 Email: ${formValues.email || 'Non fourni'}\n`;
-    
+    message += `• Nom: ${formValues.name}\n`;
+    message += `• Tél: ${formValues.phoneNumber}\n`;
+    message += `• Zone: ${zone?.name || 'N/A'}\n`;
+    message += `• Quartier: ${formValues.deliveryAddressDetail}\n`;
     message += formatProductsForWhatsApp();
-    
-    message += "\n*💰 RÉCAPITULATIF:*\n";
-    message += `• Sous-total: ${formatPrice(calculateSubtotal())}\n`;
-    message += `• Livraison: ${shipping}\n`;
-    message += `• *TOTAL: ${formatPrice(calculateTotal())}*\n`;
-    
-    if (orderNumber) message += `\n*🆔 Commande: #${orderNumber}*`;
-    
+    message += `\n*TOTAL: ${formatPrice(calculateTotal())}*`;
+    if (orderNumber) message += `\n\n🆔 *Numéro de commande: #${orderNumber}*`;
     return encodeURIComponent(message);
   };
 
+  // 4️⃣ MUTATION ET HANDLERS
   const createOrderMutation = useMutation({
     mutationFn: (orderRequest: PlaceOrderRequest) => apiClient.createOrder(orderRequest),
     onSuccess: (data) => {
       localStorage.removeItem("cart_id");
       queryClient.removeQueries({ queryKey: ["cart"] });
-      toast({ title: "Commande créée ! 🎉", description: "Succès" });
+      toast({ title: "Commande créée ! 🎉" });
       navigate("/order-success", { 
         state: { 
           orderNumber: data.data?.orderNumber,
@@ -976,6 +944,9 @@ const CheckoutPage = () => {
         }
       });
     },
+    onError: (error: any) => {
+      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+    }
   });
 
   const handleFinalizeOrder = async (data: CheckoutFormData) => {
@@ -992,30 +963,30 @@ const CheckoutPage = () => {
 
   const handleWhatsAppOnly = () => {
     form.trigger().then((isValid) => {
-        if (isValid) {
-            const message = buildWhatsAppMessage();
-            window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${message}`, '_blank');
-        }
+      if (isValid) {
+        window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${buildWhatsAppMessage()}`, '_blank');
+      } else {
+        toast({ title: "Formulaire incomplet", variant: "destructive" });
+      }
     });
   };
 
   if (isCartLoading || isZonesLoading) {
-    return (
-      <div className="min-h-screen"><Header /><div className="flex justify-center p-10"><Loader2 className="animate-spin" /></div></div>
-    );
+    return <div className="flex justify-center items-center min-h-screen"><Loader2 className="animate-spin" /></div>;
   }
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
       <div className="container py-8 px-4 max-w-6xl mx-auto">
-        <div className="flex flex-col lg:row gap-8 lg:flex-row">
-          <div className="lg:w-2/3">
-            <Card className="shadow-lg">
-              <CardHeader className="border-b bg-white">
+        <div className="flex flex-col lg:flex-row gap-8">
+          <div className="lg:w-2/3 space-y-6">
+            <Card className="shadow-lg border-2">
+              <CardHeader className="bg-primary/5 border-b">
                 <CardTitle className="text-2xl flex items-center gap-2">
-                  <ShoppingBag className="text-primary" /> Finaliser la commande
+                  <ShoppingBag className="text-primary" /> Finaliser ma commande
                 </CardTitle>
+                <CardDescription>Renseignez vos infos pour la livraison</CardDescription>
               </CardHeader>
               <CardContent className="pt-6">
                 <Form {...form}>
@@ -1024,72 +995,58 @@ const CheckoutPage = () => {
                       <FormField control={form.control} name="name" render={({ field }) => (
                         <FormItem>
                           <FormLabel>Nom complet *</FormLabel>
-                          <FormControl><Input placeholder="Ex: Moussa Diop" {...field} /></FormControl>
+                          <FormControl><div className="relative"><User className="absolute left-3 top-3 h-4 w-4 text-gray-400"/><Input className="pl-10" {...field} /></div></FormControl>
                           <FormMessage />
                         </FormItem>
                       )} />
                       <FormField control={form.control} name="phoneNumber" render={({ field }) => (
                         <FormItem>
                           <FormLabel>Téléphone *</FormLabel>
-                          <FormControl><Input placeholder="77XXXXXXX" {...field} /></FormControl>
+                          <FormControl><div className="relative"><Phone className="absolute left-3 top-3 h-4 w-4 text-gray-400"/><Input className="pl-10" {...field} /></div></FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )} />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField control={form.control} name="deliveryZoneId" render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Zone de livraison *</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl><SelectTrigger><SelectValue placeholder="Choisir une zone" /></SelectTrigger></FormControl>
+                            <SelectContent>
+                              {zonesData?.data?.map((zone: any) => (
+                                <SelectItem key={zone.id} value={zone.id.toString()}>{zone.name} (+{formatPrice(zone.price)})</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )} />
+                      <FormField control={form.control} name="deliveryAddressDetail" render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Quartier / Précision *</FormLabel>
+                          <FormControl><div className="relative"><MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-400"/><Input className="pl-10" placeholder="Ex: Cité Keur Gorgui" {...field} /></div></FormControl>
                           <FormMessage />
                         </FormItem>
                       )} />
                     </div>
 
                     <FormField control={form.control} name="address" render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Adresse de résidence *</FormLabel>
-                          <FormControl><Input placeholder="Ex: Rue 10 x 11, Médina" {...field} /></FormControl>
-                          <FormMessage />
-                        </FormItem>
+                      <FormItem>
+                        <FormLabel>Adresse de résidence</FormLabel>
+                        <FormControl><div className="relative"><Home className="absolute left-3 top-3 h-4 w-4 text-gray-400"/><Input className="pl-10" {...field} /></div></FormControl>
+                        <FormMessage />
+                      </FormItem>
                     )} />
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <FormField control={form.control} name="deliveryZoneId" render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Zone de livraison *</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                    <FormControl>
-                                        <SelectTrigger><SelectValue placeholder="Choisir une zone" /></SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                        {zonesData?.data?.map((zone: any) => (
-                                            <SelectItem key={zone.id} value={zone.id.toString()}>
-                                                {zone.name} ({formatPrice(zone.price)})
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                                <FormMessage />
-                            </FormItem>
-                        )} />
-
-                        <FormField control={form.control} name="deliveryAddressDetail" render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Quartier / Précisions *</FormLabel>
-                                <FormControl><Input placeholder="Ex: Près de la mosquée" {...field} /></FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )} />
-                    </div>
-
-                    <div className="space-y-3 pt-4">
-                      <Button 
-                        type="button" 
-                        className="w-full py-6 bg-primary" 
-                        disabled={createOrderMutation.isPending}
-                        onClick={form.handleSubmit(handleFinalizeOrder)}
-                      >
-                        {createOrderMutation.isPending ? <Loader2 className="animate-spin" /> : "Confirmer la commande"}
+                    <div className="space-y-4 pt-4">
+                      <Button type="button" className="w-full py-7 text-lg font-bold" disabled={createOrderMutation.isPending} onClick={form.handleSubmit(handleFinalizeOrder)}>
+                        {createOrderMutation.isPending ? <Loader2 className="animate-spin mr-2" /> : <CheckCircle className="mr-2" />} 
+                        Confirmer la commande
                       </Button>
-
-                      <Button 
-                        type="button" 
-                        className="w-full py-6 bg-green-500 hover:bg-green-600" 
-                        onClick={handleWhatsAppOnly}
-                      >
-                        Commander via WhatsApp
+                      <Button type="button" variant="outline" className="w-full py-7 text-lg font-bold border-green-500 text-green-600 hover:bg-green-50" onClick={handleWhatsAppOnly}>
+                         Commander via WhatsApp
                       </Button>
                     </div>
                   </form>
@@ -1099,21 +1056,27 @@ const CheckoutPage = () => {
           </div>
 
           <div className="lg:w-1/3">
-            <Card className="sticky top-8 shadow-lg">
-              <CardHeader className="bg-gray-50 border-b"><CardTitle>Résumé</CardTitle></CardHeader>
+            <Card className="sticky top-8 shadow-xl border-primary/20">
+              <CardHeader className="bg-gray-50 border-b"><CardTitle className="text-lg flex items-center gap-2"><Package size={18}/> Résumé</CardTitle></CardHeader>
               <CardContent className="pt-6 space-y-4">
-                {cartData?.items.map((item) => (
-                  <div key={item.id} className="flex justify-between text-sm">
-                    <span>{item.product.name} (x{item.quantity})</span>
-                    <span className="font-medium">{formatPrice(item.totalCents)}</span>
+                <div className="max-h-60 overflow-y-auto space-y-3">
+                  {cartData?.items.map((item) => (
+                    <div key={item.id} className="flex justify-between text-sm border-b pb-2">
+                      <span className="flex-1 pr-2">{item.product.name} <span className="text-muted-foreground text-xs">x{item.quantity}</span></span>
+                      <span className="font-medium whitespace-nowrap">{formatPrice(item.totalCents)}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="pt-4 space-y-3">
+                  <div className="flex justify-between text-gray-600"><span>Sous-total</span><span>{formatPrice(calculateSubtotal())}</span></div>
+                  <div className="flex justify-between text-blue-600 font-medium"><span>Livraison</span><span>{formatPrice(getSelectedZonePrice())}</span></div>
+                  <div className="flex justify-between text-xl font-bold border-t pt-4 text-primary">
+                    <span>Total</span><span>{formatPrice(calculateTotal())}</span>
                   </div>
-                ))}
-                <div className="border-t pt-4 space-y-2">
-                  <div className="flex justify-between"><span>Sous-total</span><span>{formatPrice(calculateSubtotal())}</span></div>
-                  <div className="flex justify-between text-blue-600"><span>Livraison</span><span>{formatPrice(getSelectedZonePrice())}</span></div>
-                  <div className="flex justify-between text-lg font-bold border-t pt-2">
-                    <span>Total</span><span className="text-primary">{formatPrice(calculateTotal())}</span>
-                  </div>
+                </div>
+                <div className="bg-green-50 p-3 rounded-lg border border-green-100 flex items-center gap-2 mt-4">
+                   <ShieldCheck className="text-green-600" size={18}/>
+                   <span className="text-xs text-green-800 font-medium">Paiement à la livraison accepté</span>
                 </div>
               </CardContent>
             </Card>

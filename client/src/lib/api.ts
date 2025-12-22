@@ -261,7 +261,7 @@ async clearCart(cartId: number | any) {
 
   // ==================== LIVRAISON ====================
 async getDeliveryZones(): Promise<ApiResponse<any>> {
-  return this.request(`/delivery-zones`);
+  return this.request(`/delivery-zones/client`);
 }
 }
 

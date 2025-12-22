@@ -53,8 +53,10 @@ const navItems = [
   { to: "/products", icon: ShoppingBag, label: "Produits", badge: 3 },
   { to: "/shop", icon: ShoppingCart, label: "Boutique" },
   { to: "/category", icon: IconCategory2, label: "Catégories" },
+  {to: "/deliver-zones", icon: ShoppingCart, label: "Zones de livraison" },
   { to: "/users", icon: Users, label: "Utilisateurs" },
   { to: "/profile", icon: User, label: "Profil" },
+
 ];
 
 export function Sidebar() {
