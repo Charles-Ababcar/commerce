@@ -329,7 +329,7 @@ async getProducts(params: any = {}) {
         method: 'DELETE'
     });
 }
-  async updateOrderStatus(id: string, status: string) {
+  async updateOrderStatus(id: number, status: string) {
     return this.request<any>(`/orders/${id}/status`, {
       method: 'PUT',
       body: JSON.stringify({ status }),

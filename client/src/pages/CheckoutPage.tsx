@@ -197,7 +197,8 @@ const CheckoutPage = () => {
               </CardHeader>
               <CardContent className="pt-6">
                 <Form {...form}>
-                  <form className="space-y-6">
+                  {/* Utilisation de form.handleSubmit pour le premier bouton */}
+                  <form onSubmit={form.handleSubmit(handleFinalizeOrder)} className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <FormField control={form.control} name="name" render={({ field }) => (
                         <FormItem><FormLabel>Nom complet *</FormLabel><FormControl><div className="relative"><User className="absolute left-3 top-3 h-4 w-4 text-gray-400"/><Input className="pl-10" placeholder="Moussa Diop" {...field} /></div></FormControl><FormMessage /></FormItem>
@@ -242,7 +243,6 @@ const CheckoutPage = () => {
                         )} />
                       </div>
 
-                      {/* ✅ AFFICHAGE DES VILLES/QUARTIERS COUVERTS */}
                       {selectedZone && (
                         <Alert className="bg-white/80 border-blue-200 animate-in fade-in slide-in-from-top-1">
                           <Info className="h-4 w-4 text-blue-600" />
@@ -259,11 +259,26 @@ const CheckoutPage = () => {
                     )} />
 
                     <div className="space-y-4 pt-4 border-t">
-                      <Button type="button" className="w-full py-7 text-lg font-bold shadow-lg" disabled={createOrderMutation.isPending} onClick={form.handleSubmit(handleFinalizeOrder)}>
+                      {/* BOUTON 1: TYPE SUBMIT (Appelle onSubmit du form) */}
+                      <Button 
+                        type="submit" 
+                        className="w-full py-7 text-lg font-bold shadow-lg" 
+                        disabled={createOrderMutation.isPending}
+                      >
                         {createOrderMutation.isPending ? <Loader2 className="animate-spin mr-2" /> : <CheckCircle className="mr-2" />} 
                         Confirmer la commande
                       </Button>
-                      <Button type="button" variant="outline" className="w-full py-7 text-lg font-bold border-green-500 text-green-600 hover:bg-green-50" onClick={handleWhatsAppOnly}>
+
+                      {/* BOUTON 2: TYPE BUTTON (N'appelle PAS la soumission automatique) */}
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        className="w-full py-7 text-lg font-bold border-green-500 text-green-600 hover:bg-green-50" 
+                        onClick={(e) => {
+                          e.preventDefault(); // Sécurité supplémentaire
+                          handleWhatsAppOnly();
+                        }}
+                      >
                         <MessageCircle className="mr-2" /> Commander via WhatsApp
                       </Button>
                     </div>
