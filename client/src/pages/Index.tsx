@@ -1,3 +1,271 @@
+// import { useState } from "react"; // 🆕 Import de useState
+// import { Button } from "@/components/ui/button";
+// import { ProductCard } from "@/components/ProductCard";
+// import { Header } from "@/components/Header";
+// import {
+//   ArrowRight,
+//   Package,
+//   Shield,
+//   Truck,
+//   Loader2,
+//   Sparkles,
+//   Award,
+//   CheckCircle,
+//   Zap,
+//   TrendingUp,
+//   Star,
+//   Clock,
+//   CreditCard,
+//   Gift,
+//   Tag,
+//   ChevronLeft,
+//   ChevronRight,
+//   Filter, // 🆕 Nouvelle icône
+// } from "lucide-react";
+// import { Link } from "react-router-dom";
+// import heroBanner from "@/assets/hero-banner.jpg";
+// import { useQuery } from "@tanstack/react-query";
+// import { apiClient } from "@/lib/api";
+// import { Skeleton } from "@/components/ui/skeleton";
+// import { Product } from "@/models/Product";
+// import { ApiResponse, PageResponse } from "@/models/ApiResponse";
+// import {
+//   Carousel,
+//   CarouselContent,
+//   CarouselItem,
+//   CarouselNext,
+//   CarouselPrevious,
+// } from "@/components/ui/carousel";
+// import { Badge } from "@/components/ui/badge";
+// import { Shop } from "@/types/api";
+
+// const Index = () => {
+//   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
+
+//   const {
+//     data: productsData,
+//     isLoading: isLoadingProducts,
+//     error: productsError,
+//   } = useQuery({
+//     queryKey: ["products-display", selectedCategoryId], 
+//     queryFn: () =>
+//       selectedCategoryId 
+//         ? apiClient.getProductsByCategory(selectedCategoryId, 0, 8) 
+//         : apiClient.getProducts(0, 12),
+//     staleTime: 1000 * 60 * 5,
+//   });
+
+//   // Récupération des catégories
+//   const { data: categoriesData, isLoading: isLoadingCategories } = useQuery({
+//     queryKey: ["categories"],
+//     queryFn: () => apiClient.getCategories(),
+//   });
+
+//   // Récupération des boutiques populaires
+//   const { data: shopsData, isLoading: isLoadingShops } = useQuery({
+//     queryKey: ["popular-shops"],
+//     queryFn: () =>
+//       apiClient.getShops(0, 8) as Promise<ApiResponse<PageResponse<Shop>>>,
+//   });
+
+//   // --- LOGIQUE DE DONNÉES (Maintenue) ---
+//   const heroImages = [
+//     { id: 1, imageUrl: heroBanner, title: "Collection Printemps-Été", description: "Découvrez nos nouveautés", buttonText: "Voir la collection", link: "/products?collection=spring" },
+//     { id: 2, imageUrl: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1200&h=600&fit=crop", title: "Promotions exclusives", description: "Jusqu'à -50% sur une sélection", buttonText: "Profiter des promos", link: "/products?promo=true" },
+//     { id: 3, imageUrl: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=1200&h=600&fit=crop", title: "Nouveautés", description: "Les derniers produits ajoutés", buttonText: "Découvrir", link: "/products?sort=newest" },
+//   ];
+
+//   const categories = Array.isArray(categoriesData?.data?.content) ? categoriesData.data?.content.slice(0, 10) : [];
+//   const displayProducts = Array.isArray(productsData?.data?.content) ? productsData.data.content : [];
+//   const shops = Array.isArray(shopsData?.data?.content) ? shopsData.data.content.slice(0, 6) : [];
+
+//   return (
+//     <div className="min-h-screen bg-gradient-to-b from-background to-gray-50/30 dark:to-gray-900/10">
+//       <Header />
+
+//       {/* Hero Carousel (Maintenu) */}
+//       <section className="relative overflow-hidden">
+//         <Carousel opts={{ loop: true, align: "start" }} className="w-full">
+//           <CarouselContent>
+//             {heroImages.map((slide) => (
+//               <CarouselItem key={slide.id} className="pl-0">
+//                 <div className="relative bg-gradient-to-br from-primary/5 via-white to-secondary/5 dark:from-primary/10 dark:via-gray-900 dark:to-secondary/10">
+//                   <div className="container relative py-16 md:py-24">
+//                     <div className="grid lg:grid-cols-2 gap-12 items-center">
+//                       <div className="space-y-6">
+//                         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary border border-primary/20"><Sparkles className="h-4 w-4" /><span className="text-sm font-medium">Nouveauté</span></div>
+//                         <h1 className="text-4xl md:text-6xl font-bold text-gray-900 dark:text-white">{slide.title} <span className="block text-primary">simplifiés</span></h1>
+//                         <p className="text-lg text-gray-600 dark:text-gray-300 max-w-xl">{slide.description}</p>
+//                         <div className="flex flex-col sm:flex-row gap-4 pt-4">
+//                           <Link to={slide.link}><Button size="lg" className="gap-3 px-8 py-6 shadow-lg">{slide.buttonText}<ArrowRight className="ml-2 h-5 w-5" /></Button></Link>
+//                           <Link to="/shops"><Button variant="outline" size="lg" className="gap-3 px-8 py-6 border-2">Découvrir les boutiques</Button></Link>
+//                         </div>
+//                       </div>
+//                       <div className="relative rounded-2xl overflow-hidden shadow-2xl border-2 border-white dark:border-gray-800">
+//                         <img src={slide.imageUrl} alt={slide.title} className="w-full h-auto object-cover aspect-video lg:aspect-square" />
+//                       </div>
+//                     </div>
+//                   </div>
+//                 </div>
+//               </CarouselItem>
+//             ))}
+//           </CarouselContent>
+//           <CarouselPrevious className="absolute left-4" /><CarouselNext className="absolute right-4" />
+//         </Carousel>
+//       </section>
+
+//       {/* Features (Maintenu) */}
+//       <section className="py-16 bg-white dark:bg-gray-900/50">
+//         <div className="container">
+//           <div className="grid md:grid-cols-3 gap-8">
+//             {[{ icon: Truck, title: "Livraison Express", color: "bg-blue-100", text: "text-blue-600" }, { icon: Shield, title: "Paiement Sécurisé", color: "bg-green-100", text: "text-green-600" }, { icon: Award, title: "Qualité Garantie", color: "bg-purple-100", text: "text-purple-600" }].map((f, i) => (
+//               <div key={i} className="bg-white dark:bg-gray-800 p-6 rounded-2xl border hover:shadow-xl transition-all">
+//                 <div className={`inline-flex p-3 rounded-xl ${f.color} mb-4`}><f.icon className={`h-6 w-6 ${f.text}`} /></div>
+//                 <h3 className="font-bold text-xl mb-2">{f.title}</h3>
+//                 <p className="text-gray-600 dark:text-gray-400 text-sm">Service premium pour votre confort.</p>
+//               </div>
+//             ))}
+//           </div>
+//         </div>
+//       </section>
+
+//       {/* 🆕 Catégories Interactives (Appel par ID) */}
+//       <section className="py-16 bg-gray-50/50 dark:bg-gray-900/30 border-y">
+//         <div className="container">
+//           <div className="flex items-center justify-between mb-8">
+//             <div>
+//               <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Nos Univers</h2>
+//               <p className="text-gray-600">Cliquez sur une catégorie pour filtrer les produits ci-dessous</p>
+//             </div>
+//             {selectedCategoryId && (
+//               <Button variant="ghost" onClick={() => setSelectedCategoryId(null)} className="text-primary hover:underline">
+//                 Réinitialiser les filtres
+//               </Button>
+//             )}
+//           </div>
+
+//           {isLoadingCategories ? (
+//             <div className="flex gap-4 overflow-x-auto pb-4">
+//               {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-12 w-32 rounded-full shrink-0" />)}
+//             </div>
+//           ) : (
+//             <div className="flex flex-wrap gap-3">
+//               {/* Bouton "Tous" */}
+//               <Button 
+//                 variant={selectedCategoryId === null ? "default" : "outline"}
+//                 onClick={() => setSelectedCategoryId(null)}
+//                 className="rounded-full px-6"
+//               >
+//                 Tout voir
+//               </Button>
+//               {categories.map((category) => (
+//                 <Button
+//                   key={category.id}
+//                   variant={selectedCategoryId === category.id ? "default" : "outline"}
+//                   onClick={() => setSelectedCategoryId(category.id)}
+//                   className={`rounded-full px-6 transition-all ${selectedCategoryId === category.id ? "shadow-md scale-105" : ""}`}
+//                 >
+//                   <Tag className="h-4 w-4 mr-2" />
+//                   {category.name}
+//                 </Button>
+//               ))}
+//             </div>
+//           )}
+//         </div>
+//       </section>
+
+//       {/* 🆕 Produits (Filtrés dynamiquement) */}
+//       <section className="py-16">
+//         <div className="container">
+//           <div className="flex items-center justify-between mb-8">
+//             <div className="flex items-center gap-3">
+//               <div className="p-2 bg-primary/10 rounded-lg text-primary"><TrendingUp className="h-6 w-6" /></div>
+//               <h2 className="text-3xl font-bold">
+//                 {selectedCategoryId 
+//                   ? `Produits : ${categories.find(c => c.id === selectedCategoryId)?.name}` 
+//                   : "Produits en vedette"}
+//               </h2>
+//             </div>
+//           </div>
+
+//           {isLoadingProducts ? (
+//             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+//               {Array.from({ length: 4 }).map((_, i) => (
+//                 <div key={i} className="space-y-4">
+//                   <Skeleton className="h-[200px] w-full rounded-xl" />
+//                   <Skeleton className="h-4 w-3/4" /><Skeleton className="h-4 w-1/2" />
+//                 </div>
+//               ))}
+//             </div>
+//           ) : productsError ? (
+//             <div className="text-center py-12"><Button onClick={() => window.location.reload()} variant="outline">Réessayer</Button></div>
+//           ) : displayProducts.length > 0 ? (
+//             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+//               {displayProducts.map((product) => (
+//                 <div key={product.id} className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+//                   <ProductCard product={product} />
+//                 </div>
+//               ))}
+//             </div>
+//           ) : (
+//             <div className="text-center py-20 bg-gray-50 dark:bg-gray-800/50 rounded-3xl border-2 border-dashed">
+//               <Package className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+//               <p className="text-lg text-gray-500">Aucun produit trouvé dans cette catégorie.</p>
+//               <Button variant="link" onClick={() => setSelectedCategoryId(null)}>Voir tous les produits</Button>
+//             </div>
+//           )}
+//         </div>
+//       </section>
+
+//       {/* Boutiques populaires (Maintenu) */}
+//       {shops.length > 0 && (
+//         <section className="py-16 bg-primary/5">
+//           <div className="container">
+//             <h2 className="text-3xl font-bold mb-8">Boutiques populaires</h2>
+//             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+//               {shops.map((shop) => (
+//                 <Link key={shop.id} to={`/shops/${shop.id}`} className="group block bg-white dark:bg-gray-800 p-4 rounded-2xl border hover:shadow-lg transition-all">
+//                   <div className="aspect-square rounded-xl overflow-hidden mb-3">
+//                     <img src={shop.imageUrl || "/api/placeholder/200/200"} alt={shop.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
+//                   </div>
+//                   <h3 className="font-bold text-sm truncate">{shop.name}</h3>
+//                 </Link>
+//               ))}
+//             </div>
+//           </div>
+//         </section>
+//       )}
+
+//       {/* Footer (Maintenu) */}
+//       <footer className="bg-gray-50 dark:bg-gray-950 border-t py-12">
+//         <div className="container grid grid-cols-1 md:grid-cols-4 gap-8">
+//           <div className="col-span-2">
+//             <h3 className="text-2xl font-bold text-primary mb-4">Minane Business</h3>
+//             <p className="text-gray-600 dark:text-gray-400 max-w-sm">Votre destination shopping premium en ligne. Qualité et sécurité garanties.</p>
+//           </div>
+//           <div>
+//             <h4 className="font-bold mb-4">Support</h4>
+//             <ul className="space-y-2 text-gray-600 dark:text-gray-400 text-sm">
+//               <li><Link to="/contact">Contact</Link></li>
+//               <li><Link to="/faq">FAQ</Link></li>
+//               <li><Link to="/shipping">Livraison</Link></li>
+//             </ul>
+//           </div>
+//           <div>
+//             <h4 className="font-bold mb-4">Légal</h4>
+//             <ul className="space-y-2 text-gray-600 dark:text-gray-400 text-sm">
+//               <li><Link to="/privacy">Confidentialité</Link></li>
+//               <li><Link to="/terms">CGV</Link></li>
+//             </ul>
+//           </div>
+//         </div>
+//       </footer>
+//     </div>
+//   );
+// };
+
+// export default Index;
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ProductCard } from "@/components/ProductCard";
@@ -14,33 +282,25 @@ import {
   Zap,
   TrendingUp,
   Star,
+  Clock,
+  CreditCard,
+  Gift,
   Tag,
+  ChevronLeft,
+  ChevronRight,
   Filter,
   ShoppingBag,
   Heart,
   Users,
   Rocket,
-  MapPin,
-  Globe,
-  Coffee,
-  Gem,
-  Music,
-  PaintBucket,
-  Scissors,
-  Palette,
-  Camera,
-  BookOpen,
-  ChevronRight,
-  Phone,
-  Mail,
-  Instagram,
-  Facebook,
-  Twitter,
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import heroBanner from "@/assets/hero-banner.jpg";
 import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Product } from "@/models/Product";
+import { ApiResponse, PageResponse } from "@/models/ApiResponse";
 import {
   Carousel,
   CarouselContent,
@@ -49,6 +309,7 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import { Badge } from "@/components/ui/badge";
+import { Shop } from "@/types/api";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -56,7 +317,6 @@ const Index = () => {
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
   const [activeHeroSlide, setActiveHeroSlide] = useState(0);
 
-  // Récupération des données
   const {
     data: productsData,
     isLoading: isLoadingProducts,
@@ -75,90 +335,56 @@ const Index = () => {
     queryFn: () => apiClient.getCategories(),
   });
 
-  // Images du Sénégal pour le carousel hero
+  const { data: shopsData, isLoading: isLoadingShops } = useQuery({
+    queryKey: ["popular-shops"],
+    queryFn: () =>
+      apiClient.getShops(0, 8) as Promise<ApiResponse<PageResponse<Shop>>>,
+  });
+
+  // Stats pour la section hero
+  const stats = [
+    { value: "10K+", label: "Produits", icon: Package },
+    { value: "500+", label: "Boutiques", icon: ShoppingBag },
+    { value: "98%", label: "Satisfaction", icon: Heart },
+    { value: "24h", label: "Livraison", icon: Rocket },
+  ];
+
   const heroImages = [
     {
       id: 1,
-      imageUrl: "https://images.unsplash.com/photo-1593693399744-1a0d1c6aaf35?w=1200&h=600&fit=crop&q=80",
-      title: "Artisanat Sénégalais",
-      description: "Découvrez l'authenticité de l'artisanat local, créé avec passion par nos artisans",
-      buttonText: "Explorer l'artisanat",
-      link: "/products?category=artisanat",
-      badge: "Made in Senegal",
-      color: "from-amber-500/20 to-orange-500/20",
-      location: "Dakar, Sénégal"
+      imageUrl: heroBanner,
+      title: "Collection Printemps-Été",
+      description: "Découvrez nos nouveautés aux couleurs vibrantes",
+      buttonText: "Explorer la collection",
+      link: "/products?collection=spring",
+      badge: "Nouveau",
+      color: "from-pink-500/20 to-orange-500/20",
     },
     {
       id: 2,
-      imageUrl: "https://images.unsplash.com/photo-1565962688292-90c3255fef97?w=1200&h=600&fit=crop&q=80",
-      title: "Mode Africaine",
-      description: "Tissus wax et créations uniques qui célèbrent la culture africaine",
-      buttonText: "Voir la collection",
-      link: "/products?category=mode",
-      badge: "Nouveauté",
-      color: "from-purple-500/20 to-pink-500/20",
-      location: "Saint-Louis, Sénégal"
+      imageUrl: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1200&h=600&fit=crop",
+      title: "Promotions Exclusives",
+      description: "Jusqu'à -50% sur une sélection d'articles premium",
+      buttonText: "Voir les offres",
+      link: "/products?promo=true",
+      badge: "Promo",
+      color: "from-blue-500/20 to-purple-500/20",
     },
     {
       id: 3,
-      imageUrl: "https://images.unsplash.com/photo-1548013146-72479768bada?w=1200&h=600&fit=crop&q=80",
-      title: "Produits Locaux",
-      description: "Des produits 100% naturels issus de notre terroir sénégalais",
+      imageUrl: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=1200&h=600&fit=crop",
+      title: "Nouveautés Arrivées",
+      description: "Les dernières tendances directement chez vous",
       buttonText: "Découvrir",
-      link: "/products?category=local",
-      badge: "Produit Local",
+      link: "/products?sort=newest",
+      badge: "Trending",
       color: "from-green-500/20 to-teal-500/20",
-      location: "Casamance, Sénégal"
     },
-  ];
-
-  // Catégories artisanales sénégalaises
-  const artisanCategories = [
-    { id: 1, name: "Tissus & Wax", icon: Palette, color: "bg-purple-100 text-purple-600" },
-    { id: 2, name: "Bijoux", icon: Gem, color: "bg-amber-100 text-amber-600" },
-    { id: 3, name: "Sculpture", icon: Scissors, color: "bg-emerald-100 text-emerald-600" },
-    { id: 4, name: "Peinture", icon: PaintBucket, color: "bg-blue-100 text-blue-600" },
-    { id: 5, name: "Musique", icon: Music, color: "bg-red-100 text-red-600" },
-    { id: 6, name: "Cuisine", icon: Coffee, color: "bg-orange-100 text-orange-600" },
-    { id: 7, name: "Photographie", icon: Camera, color: "bg-cyan-100 text-cyan-600" },
-    { id: 8, name: "Littérature", icon: BookOpen, color: "bg-indigo-100 text-indigo-600" },
-  ];
-
-  // Témoignages
-  const testimonials = [
-    {
-      id: 1,
-      name: "Aminata Diop",
-      role: "Artisane à Dakar",
-      content: "Minane m'a permis de faire connaître mes créations au niveau national. Une vraie révolution pour mon entreprise!",
-      avatar: "https://images.unsplash.com/photo-1494790108755-2616c113a1c0?w=100&h=100&fit=crop&q=80"
-    },
-    {
-      id: 2,
-      name: "Moussa Sarr",
-      role: "Client régulier",
-      content: "Je trouve toujours des produits authentiques et de qualité. La livraison est rapide et le service impeccable.",
-      avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&q=80"
-    },
-    {
-      id: 3,
-      name: "Fatou Ndiaye",
-      role: "Boutiquière à Thiès",
-      content: "Grâce à Minane, j'ai doublé mes ventes en ligne. La plateforme est intuitive et sécurisée.",
-      avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&q=80"
-    }
-  ];
-
-  // Régions du Sénégal
-  const regions = [
-    { name: "Dakar", products: "2,500+", color: "from-blue-500 to-cyan-500" },
-    { name: "Thiès", products: "1,800+", color: "from-green-500 to-emerald-500" },
-    { name: "Saint-Louis", products: "1,200+", color: "from-purple-500 to-pink-500" },
-    { name: "Ziguinchor", products: "900+", color: "from-orange-500 to-red-500" },
   ];
 
   const categories = Array.isArray(categoriesData?.data?.content) ? categoriesData.data?.content.slice(0, 10) : [];
   const displayProducts = Array.isArray(productsData?.data?.content) ? productsData.data.content : [];
+  const shops = Array.isArray(shopsData?.data?.content) ? shopsData.data.content.slice(0, 6) : [];
 
   // Auto-rotation du carousel hero
   useEffect(() => {
@@ -169,14 +395,15 @@ const Index = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-amber-50/20 via-white to-gray-50/30">
+    <div className="min-h-screen bg-gradient-to-b from-background via-white to-gray-50/30 dark:from-gray-950 dark:via-gray-900 dark:to-gray-900/10">
       <Header />
 
-      {/* Hero Section avec images du Sénégal */}
+      {/* Hero Section avec animation améliorée */}
       <section className="relative overflow-hidden">
         <Carousel 
           opts={{ loop: true, align: "start" }} 
           className="w-full"
+          onMouseEnter={() => setActiveHeroSlide(activeHeroSlide)}
         >
           <CarouselContent>
             {heroImages.map((slide, index) => (
@@ -185,27 +412,21 @@ const Index = () => {
                   <div className="container relative py-16 md:py-24 lg:py-32">
                     <div className="grid lg:grid-cols-2 gap-12 items-center">
                       <div className="space-y-8 animate-in fade-in slide-in-from-left-8 duration-700">
-                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-                          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/90 backdrop-blur-sm border border-white/20 shadow-lg">
-                            <Sparkles className="h-4 w-4 text-amber-600" />
-                            <span className="text-sm font-semibold text-gray-800">
-                              {slide.badge}
-                            </span>
-                          </div>
-                          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/10 backdrop-blur-sm">
-                            <MapPin className="h-3 w-3 text-white" />
-                            <span className="text-xs text-white">{slide.location}</span>
-                          </div>
+                        <div className="inline-flex items-center gap-3 px-4 py-2.5 rounded-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm border border-white/20 shadow-lg">
+                          <Sparkles className="h-4 w-4 text-primary" />
+                          <span className="text-sm font-semibold text-gray-800 dark:text-white">
+                            {slide.badge}
+                          </span>
                         </div>
                         
-                        <h1 className="text-5xl md:text-7xl font-bold text-gray-900 leading-tight">
+                        <h1 className="text-5xl md:text-7xl font-bold text-gray-900 dark:text-white leading-tight">
                           {slide.title}
-                          <span className="block bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent mt-2">
-                            Made in Senegal
+                          <span className="block bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent mt-2">
+                            simplifiés
                           </span>
                         </h1>
                         
-                        <p className="text-xl text-gray-600 max-w-xl leading-relaxed">
+                        <p className="text-xl text-gray-600 dark:text-gray-300 max-w-xl leading-relaxed">
                           {slide.description}
                         </p>
                         
@@ -213,33 +434,33 @@ const Index = () => {
                           <Link to={slide.link}>
                             <Button 
                               size="lg" 
-                              className="gap-3 px-10 py-7 bg-gradient-to-r from-amber-600 to-orange-600 text-white shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105"
+                              className="gap-3 px-10 py-7 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105"
                             >
                               {slide.buttonText}
                               <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
                             </Button>
                           </Link>
-                          <Link to="/categories">
+                          <Link to="/shops">
                             <Button 
                               variant="outline" 
                               size="lg" 
-                              className="gap-3 px-10 py-7 border-2 border-amber-600 text-amber-600 hover:bg-amber-50 transition-all"
+                              className="gap-3 px-10 py-7 border-2 hover:border-primary hover:bg-primary/5 transition-all"
                             >
-                              <Globe className="h-5 w-5" />
-                              Explorer toutes les catégories
+                              <Users className="h-5 w-5" />
+                              Découvrir les boutiques
                             </Button>
                           </Link>
                         </div>
                       </div>
                       
                       <div className="relative animate-in fade-in slide-in-from-right-8 duration-700">
-                        <div className="relative rounded-3xl overflow-hidden shadow-2xl border-8 border-white rotate-3 hover:rotate-0 transition-transform duration-500">
+                        <div className="relative rounded-3xl overflow-hidden shadow-2xl border-8 border-white dark:border-gray-800 rotate-3 hover:rotate-0 transition-transform duration-500">
                           <img 
                             src={slide.imageUrl} 
                             alt={slide.title} 
                             className="w-full h-auto object-cover aspect-video lg:aspect-square hover:scale-110 transition-transform duration-700"
                           />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
                         </div>
                       </div>
                     </div>
@@ -254,26 +475,21 @@ const Index = () => {
 
         {/* Stats overlay */}
         <div className="container relative -mt-10 z-10">
-          <Card className="bg-white/90 backdrop-blur-lg border border-white/20 shadow-2xl rounded-2xl">
+          <Card className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-lg border border-white/20 shadow-2xl rounded-2xl">
             <CardContent className="p-6">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                {[
-                  { value: "5K+", label: "Artisans", icon: Users, color: "text-amber-600" },
-                  { value: "15K+", label: "Produits", icon: Package, color: "text-orange-600" },
-                  { value: "98%", label: "Satisfaction", icon: Heart, color: "text-red-600" },
-                  { value: "14", label: "Régions", icon: MapPin, color: "text-green-600" },
-                ].map((stat, index) => (
+                {stats.map((stat, index) => (
                   <div 
                     key={index}
                     className="text-center group hover:scale-105 transition-transform duration-300"
                   >
-                    <div className={`inline-flex items-center justify-center w-12 h-12 rounded-xl bg-amber-100 ${stat.color} mb-3 group-hover:bg-amber-600 group-hover:text-white transition-colors`}>
+                    <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-primary/10 text-primary mb-3 group-hover:bg-primary group-hover:text-white transition-colors">
                       <stat.icon className="h-6 w-6" />
                     </div>
-                    <div className="text-3xl font-bold text-gray-900 mb-1">
+                    <div className="text-3xl font-bold text-gray-900 dark:text-white mb-1">
                       {stat.value}
                     </div>
-                    <div className="text-sm text-gray-600">
+                    <div className="text-sm text-gray-600 dark:text-gray-400">
                       {stat.label}
                     </div>
                   </div>
@@ -284,165 +500,183 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Présentation du Sénégal */}
-      <section className="py-20 bg-gradient-to-b from-white to-amber-50/30">
-        <div className="container">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div className="space-y-6">
-              <Badge className="mb-4 py-2 px-4 bg-amber-100 text-amber-700 border-0">
-                <Globe className="h-3 w-3 mr-2" />
-                À propos de nous
-              </Badge>
-              <h2 className="text-4xl font-bold text-gray-900">
-                Valoriser l'artisanat <span className="text-amber-600">sénégalais</span>
-              </h2>
-              <p className="text-gray-600 text-lg leading-relaxed">
-                Minane Business est une plateforme dédiée à la promotion de l'artisanat et des produits locaux sénégalais. 
-                Nous connectons les artisans talentueux avec des clients passionnés à travers le pays.
-              </p>
-              <div className="grid grid-cols-2 gap-4 pt-4">
-                {[
-                  { label: "Artisans accompagnés", value: "5,000+" },
-                  { label: "Communautés soutenues", value: "200+" },
-                  { label: "Villes couvertes", value: "14" },
-                  { label: "Formations dispensées", value: "150+" },
-                ].map((item, idx) => (
-                  <div key={idx} className="p-4 bg-white rounded-xl border">
-                    <div className="text-2xl font-bold text-amber-600">{item.value}</div>
-                    <div className="text-sm text-gray-600">{item.label}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="relative">
-              <div className="grid grid-cols-2 gap-4">
-                <img 
-                  src="https://images.unsplash.com/photo-1586771107445-d3ca888129fc?w=600&h=600&fit=crop&q=80" 
-                  alt="Artisanat Sénégalais" 
-                  className="rounded-2xl shadow-lg"
-                />
-                <img 
-                  src="https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?w-600&h=800&fit=crop&q=80" 
-                  alt="Produits Locaux" 
-                  className="rounded-2xl shadow-lg mt-8"
-                />
-              </div>
-              <div className="absolute -bottom-6 -left-6 bg-white p-6 rounded-2xl shadow-xl">
-                <div className="flex items-center gap-3">
-                  <div className="p-3 bg-amber-100 rounded-xl">
-                    <Award className="h-6 w-6 text-amber-600" />
-                  </div>
-                  <div>
-                    <div className="font-bold text-gray-900">Qualité Garantie</div>
-                    <div className="text-sm text-gray-600">Tous nos produits sont certifiés</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Catégories artisanales */}
-      <section className="py-20 bg-white">
+      {/* Features avec animation */}
+      <section className="py-20 bg-gradient-to-b from-white to-gray-50/50 dark:from-gray-900 dark:to-gray-900/50">
         <div className="container">
           <div className="text-center mb-12">
             <Badge variant="secondary" className="mb-4 py-2 px-4 text-sm">
-              <Tag className="h-3 w-3 mr-2" />
-              Nos spécialités
+              <Zap className="h-3 w-3 mr-2" />
+              Pourquoi nous choisir
             </Badge>
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              Explorez l'artisanat <span className="text-amber-600">sénégalais</span>
+            <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
+              Une expérience shopping exceptionnelle
             </h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              Découvrez la richesse de notre patrimoine culturel à travers ces catégories artisanales
+            <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+              Tout ce dont vous avez besoin pour un shopping en ligne sécurisé et agréable
             </p>
           </div>
           
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {artisanCategories.map((category) => (
-              <Link 
-                key={category.id}
-                to={`/products?category=${category.name.toLowerCase()}`}
-                className="group"
+          <div className="grid md:grid-cols-3 gap-8">
+            {[
+              { 
+                icon: Truck, 
+                title: "Livraison Express", 
+                description: "Recevez vos achats en 24-48h, partout en France",
+                color: "from-blue-500 to-cyan-500",
+                features: ["Suivi en temps réel", "Livraison gratuite dès 50€", "Points relais"]
+              },
+              { 
+                icon: Shield, 
+                title: "Paiement Sécurisé", 
+                description: "Transactions 100% sécurisées avec cryptage bancaire",
+                color: "from-green-500 to-emerald-500",
+                features: ["3D Secure", "Paiement en 4x", "Garantie remboursement"]
+              },
+              { 
+                icon: Award, 
+                title: "Qualité Garantie", 
+                description: "Tous nos produits sont vérifiés et certifiés",
+                color: "from-purple-500 to-pink-500",
+                features: ["Authenticité garantie", "Retour sous 30 jours", "Support premium"]
+              }
+            ].map((feature, index) => (
+              <div 
+                key={index}
+                className="group relative bg-white dark:bg-gray-800 p-8 rounded-3xl border border-gray-100 dark:border-gray-700 hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 overflow-hidden"
               >
-                <Card className="border-2 border-transparent hover:border-amber-200 hover:shadow-xl transition-all duration-300">
-                  <CardContent className="p-6 text-center">
-                    <div className={`inline-flex p-4 rounded-2xl ${category.color} mb-4 group-hover:scale-110 transition-transform duration-300`}>
-                      <category.icon className="h-6 w-6" />
-                    </div>
-                    <h3 className="font-bold text-gray-900 group-hover:text-amber-600 transition-colors">
-                      {category.name}
-                    </h3>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Régions du Sénégal */}
-      <section className="py-20 bg-gradient-to-b from-amber-50/50 to-white">
-        <div className="container">
-          <div className="text-center mb-12">
-            <Badge className="mb-4 py-2 px-4 bg-amber-100 text-amber-700 border-0">
-              <MapPin className="h-3 w-3 mr-2" />
-              Nos régions
-            </Badge>
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              Découvrez nos artisans par <span className="text-amber-600">région</span>
-            </h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              Explorez la diversité de l'artisanat à travers les différentes régions du Sénégal
-            </p>
-          </div>
-          
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {regions.map((region) => (
-              <div key={region.name} className="group">
-                <div className={`relative h-48 rounded-2xl bg-gradient-to-br ${region.color} overflow-hidden`}>
-                  <div className="absolute inset-0 bg-black/20" />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="text-center">
-                      <div className="text-3xl font-bold text-white mb-2">{region.name}</div>
-                      <div className="text-white/90">{region.products} produits</div>
-                    </div>
-                  </div>
+                <div className="absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-10 transition-opacity duration-500" />
+                
+                <div className={`inline-flex p-4 rounded-2xl bg-gradient-to-br ${feature.color} text-white mb-6 group-hover:scale-110 transition-transform duration-300`}>
+                  <feature.icon className="h-7 w-7" />
                 </div>
-                <div className="mt-4 text-center">
-                  <Link 
-                    to={`/products?region=${region.name.toLowerCase()}`}
-                    className="inline-flex items-center text-amber-600 hover:text-amber-700 font-medium"
-                  >
-                    Explorer les produits
-                    <ChevronRight className="h-4 w-4 ml-1" />
-                  </Link>
-                </div>
+                
+                <h3 className="font-bold text-2xl mb-3 text-gray-900 dark:text-white">
+                  {feature.title}
+                </h3>
+                
+                <p className="text-gray-600 dark:text-gray-400 mb-6">
+                  {feature.description}
+                </p>
+                
+                <ul className="space-y-2">
+                  {feature.features.map((feat, idx) => (
+                    <li key={idx} className="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                      <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
+                      {feat}
+                    </li>
+                  ))}
+                </ul>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Produits en vedette */}
-      <section className="py-20 bg-white">
+      {/* Catégories interactives avec effet de vague */}
+      <section className="py-20 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/5 to-transparent" />
+        
+        <div className="container relative">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-10 gap-6">
+            <div>
+              <Badge className="mb-4 py-2 px-4 bg-primary/10 text-primary border-0">
+                <Tag className="h-3 w-3 mr-2" />
+                Explorez par catégorie
+              </Badge>
+              <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
+                Parcourez nos univers
+              </h2>
+              <p className="text-gray-600 dark:text-gray-400">
+                Cliquez sur une catégorie pour découvrir ses produits
+              </p>
+            </div>
+            
+            {selectedCategoryId && (
+              <Button 
+                variant="ghost" 
+                onClick={() => setSelectedCategoryId(null)}
+                className="text-primary hover:text-primary/80 hover:bg-primary/10"
+              >
+                <Filter className="h-4 w-4 mr-2" />
+                Réinitialiser
+              </Button>
+            )}
+          </div>
+
+          {isLoadingCategories ? (
+            <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <Skeleton key={i} className="h-14 w-36 rounded-2xl shrink-0" />
+              ))}
+            </div>
+          ) : (
+            <>
+              <div className="flex flex-wrap gap-3 mb-8">
+                <Button 
+                  variant={selectedCategoryId === null ? "default" : "outline"}
+                  onClick={() => setSelectedCategoryId(null)}
+                  className={`rounded-full px-8 py-6 text-base transition-all ${
+                    selectedCategoryId === null 
+                      ? "shadow-lg scale-105" 
+                      : "hover:scale-105"
+                  }`}
+                >
+                  <Sparkles className="h-4 w-4 mr-3" />
+                  Tout voir
+                </Button>
+                
+                {categories.map((category) => (
+                  <Button
+                    key={category.id}
+                    variant={selectedCategoryId === category.id ? "default" : "outline"}
+                    onClick={() => setSelectedCategoryId(category.id)}
+                    className={`rounded-full px-8 py-6 text-base transition-all duration-300 ${
+                      selectedCategoryId === category.id 
+                        ? "shadow-lg scale-105 ring-2 ring-primary/20" 
+                        : "hover:scale-105"
+                    }`}
+                  >
+                    <Tag className="h-4 w-4 mr-3" />
+                    {category.name}
+                  </Button>
+                ))}
+              </div>
+              
+              {/* Indicateur de catégorie active */}
+              {selectedCategoryId && (
+                <div className="mb-8 p-4 bg-primary/5 rounded-2xl border border-primary/10 animate-in fade-in">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-primary/10 rounded-lg">
+                      <TrendingUp className="h-5 w-5 text-primary" />
+                    </div>
+                    <span className="text-lg font-semibold text-gray-900 dark:text-white">
+                      Affichage des produits :{" "}
+                      <span className="text-primary">
+                        {categories.find(c => c.id === selectedCategoryId)?.name}
+                      </span>
+                    </span>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </section>
+
+      {/* Produits avec tabs */}
+      <section className="py-20 bg-gradient-to-b from-gray-50/50 to-white dark:from-gray-900/50 dark:to-gray-900">
         <div className="container">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-10 gap-6">
             <div>
-              <Badge className="mb-4 py-2 px-4 bg-amber-100 text-amber-700 border-0">
-                <TrendingUp className="h-3 w-3 mr-2" />
-                Tendances du moment
-              </Badge>
-              <h2 className="text-4xl font-bold text-gray-900 mb-2">
+              <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
                 {selectedCategoryId 
                   ? `Produits sélectionnés` 
-                  : "Produits en vedette"}
+                  : "Nos meilleures ventes"}
               </h2>
-              <p className="text-gray-600">
+              <p className="text-gray-600 dark:text-gray-400">
                 {selectedCategoryId 
                   ? "Découvrez notre sélection dans cette catégorie"
-                  : "Les produits les plus appréciés par notre communauté"}
+                  : "Les produits préférés de notre communauté"}
               </p>
             </div>
             
@@ -475,6 +709,9 @@ const Index = () => {
                 <div className="max-w-md mx-auto">
                   <Package className="h-16 w-16 mx-auto text-gray-400 mb-6" />
                   <h3 className="text-xl font-bold mb-3">Oups ! Une erreur est survenue</h3>
+                  <p className="text-gray-600 mb-6">
+                    Nous n'avons pas pu charger les produits. Veuillez réessayer.
+                  </p>
                   <Button 
                     onClick={() => window.location.reload()} 
                     variant="default"
@@ -491,29 +728,41 @@ const Index = () => {
               {displayProducts.map((product, index) => (
                 <div 
                   key={product.id}
-                  className="animate-in fade-in slide-in-from-bottom-4 hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 rounded-2xl overflow-hidden"
+                  className="animate-in fade-in slide-in-from-bottom-4"
                   style={{ animationDelay: `${index * 100}ms` }}
                 >
-                  <ProductCard product={product} />
+                  <ProductCard 
+                    product={product} 
+                  />
                 </div>
               ))}
             </div>
           ) : (
-            <Card className="border-2 border-dashed border-gray-200">
+            <Card className="border-2 border-dashed border-gray-200 dark:border-gray-800">
               <CardContent className="py-20 text-center">
                 <div className="max-w-md mx-auto">
                   <Package className="h-16 w-16 mx-auto text-gray-400 mb-6" />
-                  <h3 className="text-2xl font-bold mb-3 text-gray-900">
+                  <h3 className="text-2xl font-bold mb-3 text-gray-900 dark:text-white">
                     Aucun produit trouvé
                   </h3>
-                  <Button 
-                    variant="default" 
-                    onClick={() => setSelectedCategoryId(null)}
-                    className="gap-3"
-                  >
-                    <Sparkles className="h-4 w-4" />
-                    Voir tous les produits
-                  </Button>
+                  <p className="text-gray-600 dark:text-gray-400 mb-8">
+                    Cette catégorie est actuellement vide. Découvrez nos autres collections.
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                    <Button 
+                      variant="default" 
+                      onClick={() => setSelectedCategoryId(null)}
+                      className="gap-3"
+                    >
+                      <Sparkles className="h-4 w-4" />
+                      Voir tous les produits
+                    </Button>
+                    <Button variant="outline" asChild>
+                      <Link to="/categories">
+                        Explorer les catégories
+                      </Link>
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -525,7 +774,7 @@ const Index = () => {
                 asChild 
                 variant="outline" 
                 size="lg"
-                className="px-12 py-6 text-base rounded-full border-amber-600 text-amber-600 hover:bg-amber-50"
+                className="px-12 py-6 text-base rounded-full"
               >
                 <Link to="/products">
                   Voir tous les produits
@@ -537,176 +786,200 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Témoignages */}
-      <section className="py-20 bg-gradient-to-b from-white to-amber-50/30">
-        <div className="container">
-          <div className="text-center mb-12">
-            <Badge className="mb-4 py-2 px-4 bg-amber-100 text-amber-700 border-0">
-              <Users className="h-3 w-3 mr-2" />
-              Ils nous font confiance
-            </Badge>
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              Ce que disent nos <span className="text-amber-600">clients</span>
-            </h2>
-          </div>
+      {/* Boutiques populaires avec effet parallaxe */}
+      {shops.length > 0 && (
+        <section className="py-20 relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5" />
           
-          <div className="grid md:grid-cols-3 gap-8">
-            {testimonials.map((testimonial) => (
-              <Card key={testimonial.id} className="border-0 shadow-lg hover:shadow-xl transition-all duration-300">
-                <CardContent className="p-8">
-                  <div className="flex items-center gap-4 mb-6">
-                    <img 
-                      src={testimonial.avatar} 
-                      alt={testimonial.name} 
-                      className="w-12 h-12 rounded-full object-cover"
-                    />
-                    <div>
-                      <div className="font-bold text-gray-900">{testimonial.name}</div>
-                      <div className="text-sm text-amber-600">{testimonial.role}</div>
-                    </div>
-                  </div>
-                  <p className="text-gray-600 italic">"{testimonial.content}"</p>
-                  <div className="flex mt-4">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <Star key={star} className="h-4 w-4 fill-amber-400 text-amber-400" />
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Final */}
-      <section className="py-20 bg-gradient-to-r from-amber-600 to-orange-600">
-        <div className="container">
-          <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-              Prêt à soutenir l'artisanat <span className="text-amber-200">sénégalais</span> ?
-            </h2>
-            <p className="text-xl text-white/90 mb-10">
-              Rejoignez notre communauté et découvrez des produits uniques directement des artisans locaux
-            </p>
-            
-            <div className="flex flex-col sm:flex-row gap-6 justify-center">
-              <Button 
-                size="lg" 
-                variant="secondary"
-                className="px-10 py-6 text-lg rounded-full shadow-lg hover:shadow-xl transition-all"
-                asChild
-              >
-                <Link to="/register">
-                  <ShoppingBag className="mr-3 h-5 w-5" />
-                  Commencer à vendre
-                </Link>
-              </Button>
-              
-              <Button 
-                size="lg" 
-                variant="outline"
-                className="px-10 py-6 text-lg rounded-full border-2 border-white text-white hover:bg-white hover:text-amber-600"
-                asChild
-              >
-                <Link to="/products">
-                  <Sparkles className="mr-3 h-5 w-5" />
-                  Découvrir les produits
-                </Link>
-              </Button>
+          <div className="container relative">
+            <div className="text-center mb-12">
+              <Badge variant="secondary" className="mb-4 py-2 px-4">
+                <Store className="h-3 w-3 mr-2" />
+                Nos partenaires
+              </Badge>
+              <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
+                Boutiques populaires
+              </h2>
+              <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+                Découvrez nos boutiques partenaires qui vous réservent les meilleures offres
+              </p>
             </div>
-            
-            <div className="mt-10 grid grid-cols-2 md:grid-cols-4 gap-6">
-              {[
-                { icon: Shield, text: "Paiement sécurisé" },
-                { icon: Truck, text: "Livraison rapide" },
-                { icon: Award, text: "Qualité garantie" },
-                { icon: Users, text: "Support 24/7" },
-              ].map((item, idx) => (
-                <div key={idx} className="flex items-center justify-center gap-2 text-white/90">
-                  <item.icon className="h-4 w-4" />
-                  <span className="text-sm">{item.text}</span>
-                </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+              {shops.map((shop, index) => (
+                <Link 
+                  key={shop.id} 
+                  to={`/shops/${shop.id}`}
+                  className="group relative"
+                >
+                  <Card className="overflow-hidden border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm hover:shadow-2xl transition-all duration-500 hover:-translate-y-2">
+                    <CardContent className="p-0">
+                      <div className="relative aspect-square overflow-hidden">
+                        <img 
+                          src={shop.imageUrl || "/api/placeholder/400/400"} 
+                          alt={shop.name}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                      </div>
+                      <div className="p-4 text-center">
+                        <h3 className="font-bold text-sm truncate text-gray-900 dark:text-white group-hover:text-primary transition-colors">
+                          {shop.name}
+                        </h3>
+                        <div className="flex items-center justify-center mt-2">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <Star 
+                              key={star} 
+                              className="h-3 w-3 fill-yellow-400 text-yellow-400" 
+                            />
+                          ))}
+                          <span className="text-xs text-gray-500 ml-1">(4.9)</span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
               ))}
             </div>
+
+            <div className="text-center mt-12">
+              <Button 
+                asChild 
+                variant="ghost" 
+                className="gap-3 text-primary hover:text-primary/80"
+              >
+                <Link to="/shops">
+                  Explorer toutes les boutiques
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
           </div>
+        </section>
+      )}
+
+      {/* CTA Final */}
+      <section className="py-20 bg-gradient-to-r from-primary to-primary/80">
+        <div className="container">
+          <Card className="border-0 shadow-2xl overflow-hidden">
+            <CardContent className="p-12 text-center relative overflow-hidden">
+              <div className="absolute inset-0 bg-white/5" />
+              
+              <div className="relative z-10 max-w-3xl mx-auto">
+                <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
+                  Prêt à découvrir l'expérience Minane ?
+                </h2>
+                <p className="text-xl text-white/90 mb-10">
+                  Rejoignez des milliers de clients satisfaits et profitez de nos offres exclusives.
+                </p>
+                
+                <div className="flex flex-col sm:flex-row gap-6 justify-center">
+                  <Button 
+                    size="lg" 
+                    variant="secondary"
+                    className="px-10 py-6 text-lg rounded-full shadow-lg hover:shadow-xl transition-all"
+                    asChild
+                  >
+                    <Link to="/register">
+                      <Sparkles className="mr-3 h-5 w-5" />
+                      Commencer maintenant
+                    </Link>
+                  </Button>
+                  
+                  <Button 
+                    size="lg" 
+                    variant="outline"
+                    className="px-10 py-6 text-lg rounded-full border-2 border-white text-white hover:bg-white hover:text-primary"
+                    asChild
+                  >
+                    <Link to="/products">
+                      <ShoppingBag className="mr-3 h-5 w-5" />
+                      Voir nos produits
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-gray-900 text-white">
+      {/* Footer amélioré */}
+      <footer className="bg-gray-50 dark:bg-gray-950 border-t">
         <div className="container py-16">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12">
             <div className="col-span-2">
               <div className="flex items-center gap-3 mb-6">
-                <div className="p-2 bg-amber-600 rounded-lg">
-                  <ShoppingBag className="h-6 w-6" />
+                <div className="p-2 bg-primary rounded-lg">
+                  <ShoppingBag className="h-6 w-6 text-white" />
                 </div>
-                <span className="text-2xl font-bold">Minane Business</span>
+                <span className="text-2xl font-bold text-primary">Minane Business</span>
               </div>
-              <p className="text-gray-400 max-w-md mb-8 leading-relaxed">
-                Plateforme dédiée à la promotion de l'artisanat et des produits locaux sénégalais. 
-                Nous connectons les artisans avec des clients passionnés.
+              <p className="text-gray-600 dark:text-gray-400 max-w-md mb-8 leading-relaxed">
+                Votre destination shopping premium en ligne. Nous rassemblons les meilleures boutiques 
+                pour vous offrir une expérience unique de shopping en ligne.
               </p>
               <div className="flex gap-4">
-                <Button variant="outline" size="icon" className="rounded-full border-gray-700 hover:border-amber-600 hover:bg-amber-600">
-                  <Facebook className="h-5 w-5" />
+                <Button variant="outline" size="icon" className="rounded-full">
+                  <span className="sr-only">Facebook</span>
+                  <div className="h-5 w-5" />
                 </Button>
-                <Button variant="outline" size="icon" className="rounded-full border-gray-700 hover:border-amber-600 hover:bg-amber-600">
-                  <Instagram className="h-5 w-5" />
+                <Button variant="outline" size="icon" className="rounded-full">
+                  <span className="sr-only">Instagram</span>
+                  <div className="h-5 w-5" />
                 </Button>
-                <Button variant="outline" size="icon" className="rounded-full border-gray-700 hover:border-amber-600 hover:bg-amber-600">
-                  <Twitter className="h-5 w-5" />
+                <Button variant="outline" size="icon" className="rounded-full">
+                  <span className="sr-only">Twitter</span>
+                  <div className="h-5 w-5" />
                 </Button>
               </div>
             </div>
             
             <div>
-              <h4 className="font-bold text-lg mb-6">Navigation</h4>
-              <ul className="space-y-4 text-gray-400">
-                <li><Link to="/" className="hover:text-amber-400 transition-colors">Accueil</Link></li>
-                <li><Link to="/products" className="hover:text-amber-400 transition-colors">Produits</Link></li>
-                <li><Link to="/categories" className="hover:text-amber-400 transition-colors">Catégories</Link></li>
-                <li><Link to="/artisans" className="hover:text-amber-400 transition-colors">Artisans</Link></li>
+              <h4 className="font-bold text-lg mb-6 text-gray-900 dark:text-white">À propos</h4>
+              <ul className="space-y-4 text-gray-600 dark:text-gray-400">
+                <li><Link to="/about" className="hover:text-primary transition-colors">Notre histoire</Link></li>
+                <li><Link to="/careers" className="hover:text-primary transition-colors">Carrières</Link></li>
+                <li><Link to="/press" className="hover:text-primary transition-colors">Presse</Link></li>
+                <li><Link to="/blog" className="hover:text-primary transition-colors">Blog</Link></li>
               </ul>
             </div>
             
             <div>
-              <h4 className="font-bold text-lg mb-6">Support</h4>
-              <ul className="space-y-4 text-gray-400">
-                <li><Link to="/contact" className="hover:text-amber-400 transition-colors">Contact</Link></li>
-                <li><Link to="/faq" className="hover:text-amber-400 transition-colors">FAQ</Link></li>
-                <li><Link to="/shipping" className="hover:text-amber-400 transition-colors">Livraison</Link></li>
-                <li><Link to="/returns" className="hover:text-amber-400 transition-colors">Retours</Link></li>
+              <h4 className="font-bold text-lg mb-6 text-gray-900 dark:text-white">Support</h4>
+              <ul className="space-y-4 text-gray-600 dark:text-gray-400">
+                <li><Link to="/contact" className="hover:text-primary transition-colors">Contact</Link></li>
+                <li><Link to="/faq" className="hover:text-primary transition-colors">FAQ</Link></li>
+                <li><Link to="/shipping" className="hover:text-primary transition-colors">Livraison</Link></li>
+                <li><Link to="/returns" className="hover:text-primary transition-colors">Retours</Link></li>
               </ul>
             </div>
             
             <div>
-              <h4 className="font-bold text-lg mb-6">Contact</h4>
-              <ul className="space-y-4 text-gray-400">
-                <li className="flex items-center gap-2">
-                  <Phone className="h-4 w-4" />
-                  <span>+221 33 800 00 00</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <Mail className="h-4 w-4" />
-                  <span>contact@minane.sn</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <MapPin className="h-4 w-4" />
-                  <span>Dakar, Sénégal</span>
-                </li>
+              <h4 className="font-bold text-lg mb-6 text-gray-900 dark:text-white">Légal</h4>
+              <ul className="space-y-4 text-gray-600 dark:text-gray-400">
+                <li><Link to="/privacy" className="hover:text-primary transition-colors">Confidentialité</Link></li>
+                <li><Link to="/terms" className="hover:text-primary transition-colors">CGV</Link></li>
+                <li><Link to="/cookies" className="hover:text-primary transition-colors">Cookies</Link></li>
+                <li><Link to="/legal" className="hover:text-primary transition-colors">Mentions légales</Link></li>
               </ul>
             </div>
           </div>
           
-          <div className="border-t border-gray-800 pt-8 mt-12 text-center text-gray-500 text-sm">
-            <p>© {new Date().getFullYear()} Minane Business - Tous droits réservés. Fièrement Sénégalais</p>
-            <p className="mt-2">Made with ❤️ in Senegal</p>
+          <div className="border-t pt-8 mt-12 text-center text-gray-500 dark:text-gray-400 text-sm">
+            <p>© {new Date().getFullYear()} Minane Business. Tous droits réservés.</p>
           </div>
         </div>
       </footer>
     </div>
   );
 };
+
+// Ajouter l'icône Store pour la section boutiques
+const Store = ({ className }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+  </svg>
+);
 
 export default Index;
