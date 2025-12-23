@@ -119,6 +119,10 @@ async getProductsByShopId(id: number, params: PaginationParams = {}):Promise<Api
     return this.request(`/products/by/${id}`);
   }
 
+  async getProductsByCategory(categoryId: number, page: number = 0, size: number = 12) {
+  return this.request<any>(`/products/category/${categoryId}?page=${page}&size=${size}`);
+}
+
   // ==================== PANIER ====================
   async getCart(id: string) {
     return this.request(`/carts/${id}`);
@@ -263,6 +267,8 @@ async clearCart(cartId: number | any) {
 async getDeliveryZones(): Promise<ApiResponse<any>> {
   return this.request(`/delivery-zones/client`);
 }
+
+
 }
 
 export const apiClient = new ApiClient();
