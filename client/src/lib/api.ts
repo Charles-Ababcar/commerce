@@ -120,7 +120,7 @@ async getProductsByShopId(id: number, params: PaginationParams = {}):Promise<Api
   }
 
   async getProductsByCategory(categoryId: number, page: number = 0, size: number = 12) {
-  return this.request<any>(`/products/category/${categoryId}?page=${page}&size=${size}`);
+  return this.request<any>(`/products/category/client/${categoryId}?page=${page}&size=${size}`);
 }
 
   // ==================== PANIER ====================
