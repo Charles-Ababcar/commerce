@@ -40,19 +40,17 @@ import { Badge } from "@/components/ui/badge";
 import { Shop } from "@/types/api";
 
 const Index = () => {
-  // 🆕 État pour la catégorie sélectionnée (null = tous les produits vedettes)
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
 
-  // Récupération des produits (Vedettes OU par Catégorie)
   const {
     data: productsData,
     isLoading: isLoadingProducts,
     error: productsError,
   } = useQuery({
-    queryKey: ["products-display", selectedCategoryId], // La clé change quand on clique
+    queryKey: ["products-display", selectedCategoryId], 
     queryFn: () =>
       selectedCategoryId 
-        ? apiClient.getProductsByCategory(selectedCategoryId, 0, 8) // 🆕 Appel de votre nouvel endpoint
+        ? apiClient.getProductsByCategory(selectedCategoryId, 0, 8) 
         : apiClient.getProducts(0, 12),
     staleTime: 1000 * 60 * 5,
   });
