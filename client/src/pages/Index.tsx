@@ -208,7 +208,7 @@ const Index = () => {
         </Carousel>
 
         {/* Stats overlay */}
-        <div className="container relative -mt-8 z-10">
+        {/* <div className="container relative -mt-8 z-10">
           <Card className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-lg border border-white/20 shadow-xl rounded-2xl">
             <CardContent className="p-6">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
@@ -231,11 +231,11 @@ const Index = () => {
               </div>
             </CardContent>
           </Card>
-        </div>
+        </div> */}
       </section>
 
       {/* Features */}
-      <section className="py-16 bg-white dark:bg-gray-900/50">
+      {/* <section className="py-16 bg-white dark:bg-gray-900/50">
         <div className="container">
           <div className="text-center mb-12">
             <Badge variant="secondary" className="mb-4 py-2 px-4 text-sm">
@@ -329,7 +329,7 @@ const Index = () => {
             ))}
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* Catégories Interactives */}
       <section className="py-16 bg-gray-50/50 dark:bg-gray-900/30 border-y">
@@ -591,6 +591,128 @@ const Index = () => {
           </div>
         </section>
       )}
+
+
+         <div className="container relative -mt-8 z-10">
+          <Card className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-lg border border-white/20 shadow-xl rounded-2xl">
+            <CardContent className="p-6">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                {stats.map((stat, index) => (
+                  <div 
+                    key={index}
+                    className="text-center group hover:scale-105 transition-transform duration-300"
+                  >
+                    <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-primary/10 text-primary mb-3 group-hover:bg-primary group-hover:text-white transition-colors">
+                      <stat.icon className="h-6 w-6" />
+                    </div>
+                    <div className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
+                      {stat.value}
+                    </div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">
+                      {stat.label}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+           <section className="py-16 bg-white dark:bg-gray-900/50">
+        <div className="container">
+          <div className="text-center mb-12">
+            <Badge variant="secondary" className="mb-4 py-2 px-4 text-sm">
+              <Zap className="h-3 w-3 mr-2" />
+              Pourquoi nous choisir
+            </Badge>
+            <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
+              Une expérience shopping exceptionnelle
+            </h2>
+            <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+              Tout ce dont vous avez besoin pour un shopping en ligne sécurisé et agréable
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-3 gap-8">
+            {[
+              { 
+                icon: Truck, 
+                title: "Livraison Express", 
+                description: "Recevez vos achats en 24-48h, partout en France",
+                color: "bg-blue-100",
+                textColor: "text-blue-600"
+              },
+              { 
+                icon: Shield, 
+                title: "Paiement Sécurisé", 
+                description: "Transactions 100% sécurisées avec cryptage bancaire",
+                color: "bg-green-100",
+                textColor: "text-green-600"
+              },
+              { 
+                icon: Award, 
+                title: "Qualité Garantie", 
+                description: "Tous nos produits sont vérifiés et certifiés",
+                color: "bg-purple-100",
+                textColor: "text-purple-600"
+              }
+            ].map((feature, index) => (
+              <Card 
+                key={index}
+                className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+              >
+                <CardContent className="p-6">
+                  <div className={`inline-flex p-3 rounded-xl ${feature.color} mb-4`}>
+                    <feature.icon className={`h-6 w-6 ${feature.textColor}`} />
+                  </div>
+                  <h3 className="font-bold text-xl mb-2">{feature.title}</h3>
+                  <p className="text-gray-600 dark:text-gray-400 text-sm">
+                    {feature.description}
+                  </p>
+                  <ul className="mt-4 space-y-2">
+                    {feature.title === "Livraison Express" && (
+                      <>
+                        <li className="flex items-center text-sm text-gray-500">
+                          <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
+                          Suivi en temps réel
+                        </li>
+                        <li className="flex items-center text-sm text-gray-500">
+                          <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
+                          Livraison gratuite dès 50€
+                        </li>
+                      </>
+                    )}
+                    {feature.title === "Paiement Sécurisé" && (
+                      <>
+                        <li className="flex items-center text-sm text-gray-500">
+                          <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
+                          3D Secure
+                        </li>
+                        <li className="flex items-center text-sm text-gray-500">
+                          <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
+                          Paiement en 4x sans frais
+                        </li>
+                      </>
+                    )}
+                    {feature.title === "Qualité Garantie" && (
+                      <>
+                        <li className="flex items-center text-sm text-gray-500">
+                          <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
+                          Authenticité garantie
+                        </li>
+                        <li className="flex items-center text-sm text-gray-500">
+                          <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
+                          Retour sous 30 jours
+                        </li>
+                      </>
+                    )}
+                  </ul>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
 
       {/* CTA Final */}
       <section className="py-20 bg-gradient-to-r from-primary to-primary/80">
