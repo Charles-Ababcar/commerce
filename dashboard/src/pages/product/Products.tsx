@@ -3,7 +3,13 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { DashboardLayout } from "@/components/Layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
@@ -13,12 +19,23 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ImageIcon, Search, Edit, Trash2, Plus, Package, Store, Tag } from "lucide-react";
+import {
+  ImageIcon,
+  Search,
+  Edit,
+  Trash2,
+  Plus,
+  Package,
+  Store,
+  Tag,
+  Settings2,
+} from "lucide-react";
 import { toast } from "sonner";
 import ProductModal from "./ProductModal";
 import { apiClient } from "@/lib/api";
 
 import { ApiResponse, Product } from "@/models/product";
+import { useNavigate } from "react-router-dom";
 
 export default function Products() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -28,16 +45,19 @@ export default function Products() {
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(12);
-
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const {  data, isLoading, error, refetch } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["products", page, pageSize, searchQuery],
-    queryFn: () => apiClient.getProducts({ 
-      page: page - 1, 
-      size: pageSize, 
-      search: searchQuery 
-    }).then(res => res as ApiResponse),
+    queryFn: () =>
+      apiClient
+        .getProducts({
+          page: page - 1,
+          size: pageSize,
+          search: searchQuery,
+        })
+        .then((res) => res as ApiResponse),
   });
 
   const products = data?.data?.content || [];
@@ -47,19 +67,26 @@ export default function Products() {
   const saveMutation = useMutation({
     mutationFn: async (payload: any) => {
       console.log("🎯 MUTATION - Payload reçu:", payload);
-      
+
       const { image, ...productData } = payload;
-      
+
       console.log("🎯 MUTATION - Données produit:", productData);
-      console.log("🎯 MUTATION - Image:", image ? `OUI (${image.name})` : "NON");
-      
+      console.log(
+        "🎯 MUTATION - Image:",
+        image ? `OUI (${image.name})` : "NON"
+      );
+
       // VÉRIFICATION FINALE avant envoi
       if (!productData.priceCents || productData.priceCents <= 0) {
         throw new Error("Le prix est invalide");
       }
 
       if (selectedProduct) {
-        return apiClient.updateProduct(selectedProduct.id.toString(), productData, image);
+        return apiClient.updateProduct(
+          selectedProduct.id.toString(),
+          productData,
+          image
+        );
       } else {
         return apiClient.createProduct(productData, image);
       }
@@ -73,7 +100,11 @@ export default function Products() {
     },
     onError: (e: any) => {
       console.error("❌ ERREUR MUTATION:", e);
-      toast.error(e?.response?.data?.message || e.message || "Erreur lors de l'enregistrement");
+      toast.error(
+        e?.response?.data?.message ||
+          e.message ||
+          "Erreur lors de l'enregistrement"
+      );
     },
   });
 
@@ -85,7 +116,7 @@ export default function Products() {
       queryClient.invalidateQueries({ queryKey: ["products"] });
       setDeleteDialogOpen(false);
       setProductToDelete(null);
-           refetch();
+      refetch();
       // Si on supprime le dernier produit de la page, revenir à la page précédente
       if (products.length === 1 && page > 1) {
         setPage(page - 1);
@@ -125,16 +156,16 @@ export default function Products() {
   };
 
   const formatPrice = (priceCents: number) => {
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'XOF'
+    return new Intl.NumberFormat("fr-FR", {
+      style: "currency",
+      currency: "XOF",
     }).format(priceCents);
   };
 
   const truncateText = (text: string | null, maxLength: number) => {
     if (!text) return "Aucune description";
     if (text.length <= maxLength) return text;
-    return text.substring(0, maxLength) + '...';
+    return text.substring(0, maxLength) + "...";
   };
 
   if (error) {
@@ -143,9 +174,17 @@ export default function Products() {
         <div className="flex justify-center items-center h-64">
           <div className="text-center">
             <Package className="h-16 w-16 text-red-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Erreur de chargement</h3>
-            <p className="text-gray-500 mb-4">Impossible de charger les produits</p>
-            <Button onClick={() => queryClient.refetchQueries({ queryKey: ["products"] })}>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              Erreur de chargement
+            </h3>
+            <p className="text-gray-500 mb-4">
+              Impossible de charger les produits
+            </p>
+            <Button
+              onClick={() =>
+                queryClient.refetchQueries({ queryKey: ["products"] })
+              }
+            >
               Réessayer
             </Button>
           </div>
@@ -161,14 +200,21 @@ export default function Products() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Produits</h1>
-            <p className="text-gray-600 mt-1">Gérez l'inventaire de vos produits</p>
+            <p className="text-gray-600 mt-1">
+              Gérez l'inventaire de vos produits
+            </p>
           </div>
-          <Button 
+          <Button
             onClick={handleAddClick}
             className="bg-blue-600 hover:bg-blue-700 transition-colors duration-200"
           >
             <Plus className="w-4 h-4 mr-2" />
             Nouveau Produit
+          </Button>
+
+          <Button variant="outline" onClick={() => navigate("/attributes")}>
+            <Settings2 className="w-4 h-4 mr-2" />
+            Réglages Attributs
           </Button>
         </div>
 
@@ -192,17 +238,25 @@ export default function Products() {
             <span>
               {pagination.totalElements > 0 ? (
                 <>
-                  Affichage de <span className="font-semibold">{(page - 1) * pageSize + 1}</span> à{" "}
+                  Affichage de{" "}
+                  <span className="font-semibold">
+                    {(page - 1) * pageSize + 1}
+                  </span>{" "}
+                  à{" "}
                   <span className="font-semibold">
                     {Math.min(page * pageSize, pagination.totalElements)}
                   </span>{" "}
-                  sur <span className="font-semibold">{pagination.totalElements}</span> produits
+                  sur{" "}
+                  <span className="font-semibold">
+                    {pagination.totalElements}
+                  </span>{" "}
+                  produits
                 </>
               ) : (
                 "Aucun produit trouvé"
               )}
             </span>
-            
+
             <select
               value={pageSize}
               onChange={(e) => handlePageSizeChange(e.target.value)}
@@ -236,23 +290,28 @@ export default function Products() {
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                   {products.map((product) => (
-                    <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow duration-300">
+                    <Card
+                      key={product.id}
+                      className="overflow-hidden hover:shadow-lg transition-shadow duration-300"
+                    >
                       <div className="relative">
                         {product.imageUrl ? (
-                          <img 
-                            src={product.imageUrl} 
+                          <img
+                            src={product.imageUrl}
                             alt={product.name}
                             className="h-48 w-full object-cover"
                           />
                         ) : (
                           <div className="h-48 flex flex-col items-center justify-center bg-gray-100">
                             <ImageIcon className="w-12 h-12 text-gray-400 mb-2" />
-                            <span className="text-sm text-gray-500">Aucune image</span>
+                            <span className="text-sm text-gray-500">
+                              Aucune image
+                            </span>
                           </div>
                         )}
-                        
-                        <Badge 
-                          variant="secondary" 
+
+                        <Badge
+                          variant="secondary"
                           className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm"
                         >
                           {formatPrice(product.priceCents)}
@@ -269,48 +328,59 @@ export default function Products() {
                         <p className="text-sm text-muted-foreground line-clamp-2 min-h-[40px] mb-3">
                           {truncateText(product.description, 100)}
                         </p>
-                        
+
                         {/* Boutique et Catégorie */}
                         <div className="space-y-2">
                           {/* Boutique */}
                           <div className="flex items-center gap-2 text-xs text-muted-foreground">
                             <Store className="w-3 h-3" />
                             <span className="font-medium">Boutique:</span>
-                            <span className="truncate flex-1" title={product.cshopResponseDTO?.name}>
+                            <span
+                              className="truncate flex-1"
+                              title={product.cshopResponseDTO?.name}
+                            >
                               {product.cshopResponseDTO?.name || "Non assigné"}
                             </span>
                           </div>
-                          
+
                           {/* Catégorie */}
                           <div className="flex items-center gap-2 text-xs text-muted-foreground">
                             <Tag className="w-3 h-3" />
                             <span className="font-medium">Catégorie:</span>
-                            <span className="truncate flex-1" title={product.categoryResponseDTO?.name}>
-                              {product.categoryResponseDTO?.name || "Non assigné"}
+                            <span
+                              className="truncate flex-1"
+                              title={product.categoryResponseDTO?.name}
+                            >
+                              {product.categoryResponseDTO?.name ||
+                                "Non assigné"}
                             </span>
                           </div>
                         </div>
 
                         {/* Stock */}
                         <div className="flex items-center justify-between mt-3 pt-2 border-t">
-                          <Badge 
-                            variant={product.stock > 0 ? "default" : "destructive"} 
+                          <Badge
+                            variant={
+                              product.stock > 0 ? "default" : "destructive"
+                            }
                             className="text-xs"
                           >
                             Stock: {product.stock || 0}
                           </Badge>
-                          
+
                           {/* Date de mise à jour */}
                           <span className="text-xs text-muted-foreground">
-                            {new Date(product.updatedAt).toLocaleDateString('fr-FR')}
+                            {new Date(product.updatedAt).toLocaleDateString(
+                              "fr-FR"
+                            )}
                           </span>
                         </div>
                       </CardContent>
 
                       <CardFooter className="flex gap-2 pt-0">
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
+                        <Button
+                          variant="outline"
+                          size="sm"
                           className="flex-1 hover:bg-blue-50 hover:text-blue-600 transition-colors"
                           onClick={() => handleEditClick(product)}
                         >
@@ -336,9 +406,11 @@ export default function Products() {
                   <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t">
                     <div className="text-sm text-muted-foreground">
                       Page <span className="font-semibold">{page}</span> sur{" "}
-                      <span className="font-semibold">{pagination.totalPages}</span>
+                      <span className="font-semibold">
+                        {pagination.totalPages}
+                      </span>
                     </div>
-                    
+
                     <div className="flex items-center gap-2">
                       <Button
                         variant="outline"
@@ -348,24 +420,29 @@ export default function Products() {
                       >
                         Précédent
                       </Button>
-                      
+
                       <div className="flex items-center gap-1">
-                        {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
-                          const pageNumber = i + 1;
-                          return (
-                            <Button
-                              key={pageNumber}
-                              variant={page === pageNumber ? "default" : "outline"}
-                              size="sm"
-                              className="w-8 h-8 p-0 text-xs"
-                              onClick={() => handlePageChange(pageNumber)}
-                            >
-                              {pageNumber}
-                            </Button>
-                          );
-                        })}
+                        {Array.from(
+                          { length: Math.min(5, pagination.totalPages) },
+                          (_, i) => {
+                            const pageNumber = i + 1;
+                            return (
+                              <Button
+                                key={pageNumber}
+                                variant={
+                                  page === pageNumber ? "default" : "outline"
+                                }
+                                size="sm"
+                                className="w-8 h-8 p-0 text-xs"
+                                onClick={() => handlePageChange(pageNumber)}
+                              >
+                                {pageNumber}
+                              </Button>
+                            );
+                          }
+                        )}
                       </div>
-                      
+
                       <Button
                         variant="outline"
                         size="sm"
@@ -385,10 +462,9 @@ export default function Products() {
                   {searchQuery ? "Aucun produit trouvé" : "Aucun produit"}
                 </h3>
                 <p className="text-gray-500 mb-4">
-                  {searchQuery 
-                    ? "Aucun produit ne correspond à votre recherche." 
-                    : "Commencez par créer votre premier produit."
-                  }
+                  {searchQuery
+                    ? "Aucun produit ne correspond à votre recherche."
+                    : "Commencez par créer votre premier produit."}
                 </p>
                 <Button onClick={handleAddClick}>
                   <Plus className="w-4 h-4 mr-2" />
@@ -421,7 +497,8 @@ export default function Products() {
               </DialogTitle>
               <DialogDescription>
                 Êtes-vous sûr de vouloir supprimer le produit{" "}
-                <strong>{productToDelete?.name}</strong> ? Cette action est irréversible.
+                <strong>{productToDelete?.name}</strong> ? Cette action est
+                irréversible.
               </DialogDescription>
             </DialogHeader>
             <DialogFooter className="flex flex-row justify-end gap-2 mt-6">

@@ -18,6 +18,7 @@ import ForgotPassword from "./pages/ForgetPassword";
 import ResetPassword from "./pages/resetPassword";
 import RequestAccess from "./pages/RequestAccess";
 import DeliveryZones from "./pages/deliveryZone/DeliveryZones";
+import AttributeManager from "./pages/product/AttributManger/AttributeManager";
 const queryClient = new QueryClient();
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -56,6 +57,7 @@ const App = () => (
             <Route path="/" element={<Navigate to="/dashboard" />} />
             <Route path="*" element={<NotFound />} />
             <Route path="/deliver-zones" element={<DeliveryZones />} />
+            <Route path="/attributes"  element={<AttributeManager />}/>
           </Routes>
         </BrowserRouter>
       </TooltipProvider>
