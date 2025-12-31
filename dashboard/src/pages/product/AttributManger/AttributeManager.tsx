@@ -4,16 +4,33 @@ import { apiClient } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Edit, Palette, Ruler, Plus } from "lucide-react";
+import { Edit, Palette, Ruler, Plus, ArrowLeft } from "lucide-react";
+import { DashboardLayout } from '@/components/Layout/DashboardLayout';
+import { useNavigate } from 'react-router-dom';
 
 const AttributeManager = () => {
     const [view, setView] = useState<'colors' | 'sizes'>('colors');
+    const navigate = useNavigate();
 
     return (
+         <DashboardLayout>
         <div className="p-6 bg-white rounded-lg shadow-sm border">
             <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold text-gray-800">Gestion des Attributs</h2>
             </div>
+
+            <div className="flex items-center gap-4 mb-6">
+                    <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => navigate(-1)}
+                        className="hover:bg-gray-100"
+                    >
+                        <ArrowLeft className="w-5 h-5 mr-2" />
+                        Retour
+                    </Button>
+                    <h2 className="text-2xl font-bold text-gray-800">Gestion des Attributs</h2>
+                </div>
             
             {/* Toggle Switch */}
             <div className="flex mb-8 bg-gray-100 p-1 rounded-lg w-fit">
@@ -40,6 +57,7 @@ const AttributeManager = () => {
                 {view === 'colors' ? <ColorListManager /> : <SizeListManager />}
             </div>
         </div>
+        </DashboardLayout>
     );
 };
 
@@ -64,6 +82,7 @@ const SizeListManager = () => {
     });
 
     return (
+        <DashboardLayout>
         <div className="space-y-4">
             <div className="flex gap-2">
                 <Input 
@@ -91,6 +110,7 @@ const SizeListManager = () => {
                 ))}
             </div>
         </div>
+        </DashboardLayout>
     );
 };
 
@@ -115,6 +135,7 @@ const ColorListManager = () => {
     });
 
     return (
+        <DashboardLayout>
         <div className="space-y-4">
             <div className="flex flex-wrap gap-2 items-end p-4 bg-blue-50/50 rounded-lg">
                 <div className="space-y-1">
@@ -160,6 +181,7 @@ const ColorListManager = () => {
                 ))}
             </div>
         </div>
+        </DashboardLayout>
     );
 };
 
