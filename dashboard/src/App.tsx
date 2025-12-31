@@ -57,7 +57,7 @@ const App = () => (
             <Route path="/" element={<Navigate to="/dashboard" />} />
             <Route path="*" element={<NotFound />} />
             <Route path="/deliver-zones" element={<DeliveryZones />} />
-            <Route path="/attributes"  element={<AttributeManager />}/>
+            <Route path="/dashboard/attributes"  element={<AttributeManager />}/>
           </Routes>
         </BrowserRouter>
       </TooltipProvider>
