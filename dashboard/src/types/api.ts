@@ -101,3 +101,18 @@ export interface RecentOrder {
   customerEmail?: string;
   shopName?: string;
 }
+
+export interface Color {
+  id: number;
+  name: string;
+  hexCode: string;
+  createdAt: string | null;
+  updatedAt: string | null;
+}
+
+export interface Size {
+  id: number;
+  name: string;
+  createdAt: string | null;
+  updatedAt: string | null;
+}

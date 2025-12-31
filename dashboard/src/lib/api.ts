@@ -1,8 +1,10 @@
+import { ApiResponse } from "@/models/api-response";
 import { CategoryRequestDTO } from "@/models/CategoryRequestDTO";
 import { CategoryResponseDTO } from "@/models/CategoryResponseDTO";
 import { LoginResponse, LoginResponseData } from "@/models/LoginResponse";
 import { UpdatePasswordAdminDTO, UpdatePasswordSelfDTO } from "@/models/UpdatePasswordDTO";
 import { UserRequestDTO } from "@/models/UsersDTO";
+import { Color, Size } from "@/types/api";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://77.37.125.11:8080/api';
 
@@ -229,6 +231,13 @@ async createProduct(data: any, image?: File) {
   if (data.categoryId !== undefined && data.categoryId !== null) {
     formData.append('categoryId', String(data.categoryId));
   }
+  // Dans apiClient.ts
+if (data.colorIds) {
+  data.colorIds.forEach((id: number) => formData.append('colorIds', String(id)));
+}
+if (data.sizeIds) {
+  data.sizeIds.forEach((id: number) => formData.append('sizeIds', String(id)));
+}
   
   // Image
   if (image) {
@@ -266,6 +275,13 @@ async updateProduct(id: string, data: any, image?: File) {
   if (data.categoryId !== undefined && data.categoryId !== null) {
     formData.append('categoryId', String(data.categoryId));
   }
+  // Dans apiClient.ts
+if (data.colorIds) {
+  data.colorIds.forEach((id: number) => formData.append('colorIds', String(id)));
+}
+if (data.sizeIds) {
+  data.sizeIds.forEach((id: number) => formData.append('sizeIds', String(id)));
+}
   
   // Image
   if (image) {
@@ -295,6 +311,27 @@ async getProducts(params: any = {}) {
     });
   }
 
+  // Méthodes pour les Couleurs
+async getColors() {
+    return this.request<ApiResponse<Color[]>>("/colors", { method: "GET" });
+}
+async createColor(data: { name: string; hexCode: string }) {
+    return this.request<ApiResponse<Color>>("/colors", { method: "POST", body: JSON.stringify(data) });
+}
+async updateColor(id: number, data: { name: string; hexCode: string }) {
+    return this.request<ApiResponse<Color>>(`/colors/${id}`, { method: "PUT", body: JSON.stringify(data) });
+}
+
+// Méthodes pour les Tailles
+async getSizes() {
+    return this.request<ApiResponse<Size[]>>("/sizes", { method: "GET" });
+}
+async createSize(data: { name: string }) {
+    return this.request<ApiResponse<Size>>("/sizes", { method: "POST", body: JSON.stringify(data) });
+}
+async updateSize(id: number, data: { name: string }) {
+    return this.request<ApiResponse<Size>>(`/sizes/${id}`, { method: "PUT", body: JSON.stringify(data) });
+}
 
 
   // ---------- Orders ----------
