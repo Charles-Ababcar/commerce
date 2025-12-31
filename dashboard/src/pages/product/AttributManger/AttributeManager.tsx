@@ -13,60 +13,57 @@ const AttributeManager = () => {
     const navigate = useNavigate();
 
     return (
-         <DashboardLayout>
-        <div className="p-6 bg-white rounded-lg shadow-sm border">
-            <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-gray-800">Gestion des Attributs</h2>
-            </div>
-
-            <div className="flex items-center gap-4 mb-6">
+        <DashboardLayout>
+            <div className="p-6 bg-white rounded-lg shadow-sm border">
+                {/* Header avec bouton retour */}
+                <div className="flex items-center gap-4 mb-6 border-b pb-4">
                     <Button 
-                        variant="ghost" 
+                        variant="outline" 
                         size="sm" 
                         onClick={() => navigate(-1)}
-                        className="hover:bg-gray-100"
+                        className="flex items-center"
                     >
-                        <ArrowLeft className="w-5 h-5 mr-2" />
+                        <ArrowLeft className="w-4 h-4 mr-2" />
                         Retour
                     </Button>
                     <h2 className="text-2xl font-bold text-gray-800">Gestion des Attributs</h2>
                 </div>
-            
-            {/* Toggle Switch */}
-            <div className="flex mb-8 bg-gray-100 p-1 rounded-lg w-fit">
-                <button 
-                    onClick={() => setView('colors')}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition ${
-                        view === 'colors' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500 hover:text-gray-700'
-                    }`}
-                >
-                    <Palette className="w-4 h-4" /> Couleurs
-                </button>
-                <button 
-                    onClick={() => setView('sizes')}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition ${
-                        view === 'sizes' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500 hover:text-gray-700'
-                    }`}
-                >
-                    <Ruler className="w-4 h-4" /> Tailles
-                </button>
-            </div>
+                
+                {/* Toggle Switch */}
+                <div className="flex mb-8 bg-gray-100 p-1 rounded-lg w-fit">
+                    <button 
+                        onClick={() => setView('colors')}
+                        className={`flex items-center gap-2 px-6 py-2 rounded-md text-sm font-medium transition ${
+                            view === 'colors' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500 hover:text-gray-700'
+                        }`}
+                    >
+                        <Palette className="w-4 h-4" /> Couleurs
+                    </button>
+                    <button 
+                        onClick={() => setView('sizes')}
+                        className={`flex items-center gap-2 px-6 py-2 rounded-md text-sm font-medium transition ${
+                            view === 'sizes' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500 hover:text-gray-700'
+                        }`}
+                    >
+                        <Ruler className="w-4 h-4" /> Tailles
+                    </button>
+                </div>
 
-            {/* Contenu dynamique */}
-            <div className="animate-in fade-in duration-300">
-                {view === 'colors' ? <ColorListManager /> : <SizeListManager />}
+                {/* Contenu dynamique (SANS DashboardLayout ici) */}
+                <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    {view === 'colors' ? <ColorListManager /> : <SizeListManager />}
+                </div>
             </div>
-        </div>
         </DashboardLayout>
     );
 };
 
-// --- GESTION DES TAILLES ---
+// --- GESTION DES TAILLES (Nettoyé) ---
 const SizeListManager = () => {
     const queryClient = useQueryClient();
     const [newName, setNewName] = useState("");
     
-    const { data: sizesRes, isLoading } = useQuery({ 
+    const { data: sizesRes } = useQuery({ 
         queryKey: ["sizes"], 
         queryFn: () => apiClient.getSizes() 
     });
@@ -77,19 +74,17 @@ const SizeListManager = () => {
             queryClient.invalidateQueries({ queryKey: ["sizes"] });
             setNewName("");
             toast.success("Taille ajoutée avec succès");
-        },
-        onError: () => toast.error("Erreur lors de l'ajout")
+        }
     });
 
     return (
-        <DashboardLayout>
         <div className="space-y-4">
-            <div className="flex gap-2">
+            <div className="flex gap-2 p-4 bg-gray-50 rounded-lg">
                 <Input 
-                    placeholder="Nouvelle taille (ex: XXL, 42...)" 
+                    placeholder="Nouvelle taille (ex: XL, 42...)" 
                     value={newName}
                     onChange={(e) => setNewName(e.target.value)}
-                    className="max-w-xs"
+                    className="max-w-xs bg-white"
                 />
                 <Button 
                     onClick={() => addMutation.mutate(newName)} 
@@ -99,10 +94,10 @@ const SizeListManager = () => {
                 </Button>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {sizesRes?.data?.map((size: any) => (
-                    <div key={size.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-md border">
-                        <span className="font-semibold">{size.name}</span>
+                    <div key={size.id} className="flex justify-between items-center p-3 bg-white rounded-md border shadow-sm">
+                        <span className="font-semibold text-gray-700">{size.name}</span>
                         <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                             <Edit className="w-3 h-3 text-gray-400" />
                         </Button>
@@ -110,11 +105,10 @@ const SizeListManager = () => {
                 ))}
             </div>
         </div>
-        </DashboardLayout>
     );
 };
 
-// --- GESTION DES COULEURS ---
+// --- GESTION DES COULEURS (Nettoyé) ---
 const ColorListManager = () => {
     const queryClient = useQueryClient();
     const [name, setName] = useState("");
@@ -135,32 +129,30 @@ const ColorListManager = () => {
     });
 
     return (
-        <DashboardLayout>
         <div className="space-y-4">
-            <div className="flex flex-wrap gap-2 items-end p-4 bg-blue-50/50 rounded-lg">
+            <div className="flex flex-wrap gap-4 items-end p-4 bg-blue-50/50 rounded-lg border border-blue-100">
                 <div className="space-y-1">
-                    <label className="text-xs font-bold text-gray-500 uppercase">Nom</label>
+                    <label className="text-xs font-bold text-gray-500 uppercase">Nom de la couleur</label>
                     <Input 
-                        placeholder="Bleu Marine" 
+                        placeholder="Ex: Rouge vif" 
                         value={name}
                         onChange={(e) => setName(e.target.value)}
-                        className="bg-white"
+                        className="bg-white min-w-[200px]"
                     />
                 </div>
                 <div className="space-y-1">
-                    <label className="text-xs font-bold text-gray-500 uppercase">Couleur</label>
-                    <div className="flex gap-2">
-                        <Input 
-                            type="color" 
-                            value={hex}
-                            onChange={(e) => setHex(e.target.value)}
-                            className="w-12 p-1 h-10 bg-white"
-                        />
-                    </div>
+                    <label className="text-xs font-bold text-gray-500 uppercase">Aperçu</label>
+                    <Input 
+                        type="color" 
+                        value={hex}
+                        onChange={(e) => setHex(e.target.value)}
+                        className="w-16 p-1 h-10 bg-white cursor-pointer"
+                    />
                 </div>
                 <Button 
                     onClick={() => addMutation.mutate({ name, hexCode: hex })}
-                    disabled={!name.trim()}
+                    disabled={!name.trim() || addMutation.isPending}
+                    className="bg-blue-600 hover:bg-blue-700"
                 >
                     <Plus className="w-4 h-4 mr-2" /> Ajouter
                 </Button>
@@ -168,20 +160,24 @@ const ColorListManager = () => {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {colorsRes?.data?.map((color: any) => (
-                    <div key={color.id} className="flex items-center justify-between p-3 border rounded-md bg-white shadow-sm">
+                    <div key={color.id} className="flex items-center justify-between p-3 border rounded-md bg-white shadow-sm hover:border-blue-200 transition-colors">
                         <div className="flex items-center gap-3">
                             <div 
-                                className="w-6 h-6 rounded-full border shadow-inner" 
+                                className="w-8 h-8 rounded-full border shadow-inner" 
                                 style={{ backgroundColor: color.hexCode }} 
                             />
-                            <span className="text-sm font-medium">{color.name}</span>
+                            <div>
+                                <p className="text-sm font-bold text-gray-800">{color.name}</p>
+                                <p className="text-[10px] text-gray-400 font-mono uppercase">{color.hexCode}</p>
+                            </div>
                         </div>
-                        <span className="text-xs text-gray-400 font-mono uppercase">{color.hexCode}</span>
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                            <Edit className="w-3 h-3 text-gray-400" />
+                        </Button>
                     </div>
                 ))}
             </div>
         </div>
-        </DashboardLayout>
     );
 };
 

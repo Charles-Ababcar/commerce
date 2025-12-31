@@ -56,8 +56,11 @@ const App = () => (
             <Route path="/request-access" element={<RequestAccess />} />
             <Route path="/" element={<Navigate to="/dashboard" />} />
             <Route path="*" element={<NotFound />} />
-            <Route path="/deliver-zones" element={<DeliveryZones />} />
-            <Route path="/dashboard/attributes"  element={<AttributeManager />}/>
+            <Route path="/deliver-zones" element={<ProtectedRoute><DeliveryZones /></ProtectedRoute>} />
+            <Route 
+              path="/dashboard/attributes" 
+              element={<ProtectedRoute><AttributeManager /></ProtectedRoute>} 
+            />
           </Routes>
         </BrowserRouter>
       </TooltipProvider>
