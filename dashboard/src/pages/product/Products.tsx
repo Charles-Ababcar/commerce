@@ -212,7 +212,7 @@ export default function Products() {
             Nouveau Produit
           </Button>
 
-          <Button variant="outline" onClick={() => navigate("/attributes")}>
+          <Button variant="outline" onClick={() => navigate("/dashboard/attributes")}>
             <Settings2 className="w-4 h-4 mr-2" />
             Réglages Attributs
           </Button>
