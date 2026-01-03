@@ -1,14 +1,48 @@
 services:
+  # Client Prod
   client:
     build:
       context: .
       dockerfile: client/Dockerfile
+      args:
+        ENV_FILE: .env.prod
     container_name: client-app
+    ports:
+      - "80:80"         # port Nginx prod
     restart: always
 
+  # Client Test
+  client-test:
+    build:
+      context: .
+      dockerfile: client/Dockerfile
+      args:
+        ENV_FILE: .env.test
+    container_name: client-test-app
+    ports:
+      - "8083:80"       # port Nginx test
+    restart: always
+
+  # Dashboard Prod
   dashboard:
     build:
       context: .
       dockerfile: dashboard/Dockerfile
+      args:
+        ENV_FILE: .env.prod
     container_name: dashboard-app
+    ports:
+      - "5174:80"       # port Nginx prod dashboard
+    restart: always
+
+  # Dashboard Test
+  dashboard-test:
+    build:
+      context: .
+      dockerfile: dashboard/Dockerfile
+      args:
+        ENV_FILE: .env.test
+    container_name: dashboard-test-app
+    ports:
+      - "5175:80"       # port Nginx test dashboard
     restart: always
