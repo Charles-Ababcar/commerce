@@ -2,37 +2,37 @@ services:
   # Client Prod
   client:
     build:
-      context: ./client         # <-- dossier client
+      context: ./client
       dockerfile: Dockerfile
       args:
         ENV_FILE: .env.prod
     container_name: client-app
     ports:
-      - "80:80"                # prod sur port 80
+      - "5173:80"
     restart: always
 
   # Client Test
   client-test:
     build:
-      context: ./client         # <-- dossier client
+      context: ./client
       dockerfile: Dockerfile
       args:
         ENV_FILE: .env.test
     container_name: client-test-app
     ports:
-      - "8083:80"              # test sur port 8083
+      - "5176:80"
     restart: always
 
   # Dashboard Prod
   dashboard:
     build:
-      context: ./dashboard      # <-- dossier dashboard
+      context: ./dashboard
       dockerfile: Dockerfile
       args:
         ENV_FILE: .env.prod
     container_name: dashboard-app
     ports:
-      - "5174:80"              # prod dashboard
+      - "5174:80"
     restart: always
 
   # Dashboard Test
@@ -44,5 +44,5 @@ services:
         ENV_FILE: .env.test
     container_name: dashboard-test-app
     ports:
-      - "5175:80"              # test dashboard
+      - "5175:80"
     restart: always
