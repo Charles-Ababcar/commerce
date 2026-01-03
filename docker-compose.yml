@@ -1,3 +1,5 @@
+version: "3.9"
+
 services:
   client-prod:
     build:
@@ -5,9 +7,10 @@ services:
       args:
         ENV_FILE: .env.prod
     container_name: client-prod
-    ports:
-      - "5173:5173"
-    restart: always
+    expose:
+      - "80"
+    networks:
+      - commerce-net
 
   client-test:
     build:
@@ -15,9 +18,10 @@ services:
       args:
         ENV_FILE: .env.test
     container_name: client-test
-    ports:
-      - "5174:5173"
-    restart: always
+    expose:
+      - "80"
+    networks:
+      - commerce-net
 
   dashboard-prod:
     build:
@@ -25,9 +29,10 @@ services:
       args:
         ENV_FILE: .env.prod
     container_name: dashboard-prod
-    ports:
-      - "5175:5173"
-    restart: always
+    expose:
+      - "80"
+    networks:
+      - commerce-net
 
   dashboard-test:
     build:
@@ -35,6 +40,11 @@ services:
       args:
         ENV_FILE: .env.test
     container_name: dashboard-test
-    ports:
-      - "5176:5173"
-    restart: always
+    expose:
+      - "80"
+    networks:
+      - commerce-net
+
+networks:
+  commerce-net:
+    external: true
