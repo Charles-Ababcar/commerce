@@ -1,50 +1,50 @@
 version: "3.9"
 
 services:
-  # Client Prod
+  # CLIENT PROD
   client:
     build:
       context: ./client
       dockerfile: Dockerfile
       args:
-        ENV_FILE: .env
-    container_name: client-app
-    ports:
-      - "5173:80"
+        ENV_FILE: .env.prod
+    container_name: client-prod
     restart: always
+    ports:
+      - "8080:80"
 
-  # Client Test
+  # CLIENT TEST
   client-test:
     build:
       context: ./client
       dockerfile: Dockerfile
       args:
         ENV_FILE: .env.test
-    container_name: client-test-app
-    ports:
-      - "5176:80"
+    container_name: client-test
     restart: always
+    ports:
+      - "8081:80"
 
-  # Dashboard Prod
+  # DASHBOARD PROD
   dashboard:
     build:
       context: ./dashboard
       dockerfile: Dockerfile
       args:
-        ENV_FILE: .env
-    container_name: dashboard-app
-    ports:
-      - "5174:80"
+        ENV_FILE: .env.prod
+    container_name: dashboard-prod
     restart: always
+    ports:
+      - "8082:80"
 
-  # Dashboard Test
+  # DASHBOARD TEST
   dashboard-test:
     build:
       context: ./dashboard
       dockerfile: Dockerfile
       args:
         ENV_FILE: .env.test
-    container_name: dashboard-test-app
-    ports:
-      - "5175:80"
+    container_name: dashboard-test
     restart: always
+    ports:
+      - "8083:80"

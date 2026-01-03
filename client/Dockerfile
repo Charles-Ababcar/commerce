@@ -1,14 +1,23 @@
-# Stage 1: build
-FROM node:20-alpine AS build
+FROM node:18-alpine AS build
 WORKDIR /app
+
+ARG ENV_FILE
+
 COPY package*.json ./
 RUN npm install
-ARG ENV_FILE=.env
-COPY . .
-RUN cp $ENV_FILE .env && npm run build
 
-# Stage 2: Nginx
-FROM nginx:1.25-alpine
-COPY --from=build /app/dist /usr/share/nginx/html
-RUN rm /etc/nginx/conf.d/default.conf
+COPY . .
+
+# inject env
+COPY ${ENV_FILE} .env
+
+RUN npm run build
+
+FROM nginx:alpine
 COPY nginx/default.conf /etc/nginx/conf.d/default.conf
+
+# ⚠️ adapte si build ou dist
+COPY --from=build /app/dist /usr/share/nginx/html
+
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
