@@ -4,13 +4,11 @@ services:
       context: .
       dockerfile: client/Dockerfile
     container_name: client-app
-    ports:
-      - "5173:80"
+    restart: always
 
   dashboard:
     build:
       context: .
       dockerfile: dashboard/Dockerfile
     container_name: dashboard-app
-    ports:
-      - "5174:80"
+    restart: always
