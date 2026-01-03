@@ -6,7 +6,7 @@ services:
         ENV_FILE: .env.prod
     container_name: client-prod
     ports:
-      - "127.0.0.1:5173:5173"
+      - "5173:5173"
     restart: always
 
   client-test:
@@ -16,7 +16,7 @@ services:
         ENV_FILE: .env.test
     container_name: client-test
     ports:
-      - "127.0.0.1:5174:5173"
+      - "5174:5173"
     restart: always
 
   dashboard-prod:
@@ -26,7 +26,7 @@ services:
         ENV_FILE: .env.prod
     container_name: dashboard-prod
     ports:
-      - "127.0.0.1:5175:5173"
+      - "5175:5173"
     restart: always
 
   dashboard-test:
@@ -36,5 +36,5 @@ services:
         ENV_FILE: .env.test
     container_name: dashboard-test
     ports:
-      - "127.0.0.1:5176:5173"
+      - "5176:5173"
     restart: always
