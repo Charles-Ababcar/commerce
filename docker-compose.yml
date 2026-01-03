@@ -1,50 +1,32 @@
-version: "3.9"
-
 services:
   client-prod:
-    build:
-      context: ./client
-      args:
-        ENV_FILE: .env.prod
+    # ... build etc ...
     container_name: client-prod
-    expose:
-      - "80"
+    ports:
+      - "5173:80"  # Redirige le 5173 de l'hôte vers le 80 du conteneur
     networks:
       - commerce-net
 
   client-test:
-    build:
-      context: ./client
-      args:
-        ENV_FILE: .env.test
+    # ...
     container_name: client-test
-    expose:
-      - "80"
+    ports:
+      - "5174:80"
     networks:
       - commerce-net
 
   dashboard-prod:
-    build:
-      context: ./dashboard
-      args:
-        ENV_FILE: .env.prod
+    # ...
     container_name: dashboard-prod
-    expose:
-      - "80"
+    ports:
+      - "5175:80"
     networks:
       - commerce-net
 
   dashboard-test:
-    build:
-      context: ./dashboard
-      args:
-        ENV_FILE: .env.test
+    # ...
     container_name: dashboard-test
-    expose:
-      - "80"
+    ports:
+      - "5176:80"
     networks:
       - commerce-net
-
-networks:
-  commerce-net:
-    external: true
