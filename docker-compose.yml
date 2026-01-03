@@ -5,10 +5,9 @@ services:
       args:
         ENV_FILE: .env.prod
     container_name: client-prod
-    expose:
-      - "5173"
-    networks:
-      - web
+    ports:
+      - "127.0.0.1:5173:5173"
+    restart: always
 
   client-test:
     build:
@@ -16,10 +15,9 @@ services:
       args:
         ENV_FILE: .env.test
     container_name: client-test
-    expose:
-      - "5174"
-    networks:
-      - web
+    ports:
+      - "127.0.0.1:5174:5173"
+    restart: always
 
   dashboard-prod:
     build:
@@ -27,10 +25,9 @@ services:
       args:
         ENV_FILE: .env.prod
     container_name: dashboard-prod
-    expose:
-      - "5175"
-    networks:
-      - web
+    ports:
+      - "127.0.0.1:5175:5173"
+    restart: always
 
   dashboard-test:
     build:
@@ -38,11 +35,6 @@ services:
       args:
         ENV_FILE: .env.test
     container_name: dashboard-test
-    expose:
-      - "5176"
-    networks:
-      - web
-
-networks:
-  web:
-    external: true
+    ports:
+      - "127.0.0.1:5176:5173"
+    restart: always
