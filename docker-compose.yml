@@ -1,32 +1,58 @@
+version: "3.9"
+
 services:
+  # --- FRONTEND CLIENT PRODUCTION ---
   client-prod:
-    # ... build etc ...
+    build:
+      context: ./client
+      args:
+        ENV_FILE: .env.prod
     container_name: client-prod
+    restart: always
     ports:
-      - "5173:80"  # Redirige le 5173 de l'hôte vers le 80 du conteneur
+      - "5173:80"
     networks:
       - commerce-net
 
+  # --- FRONTEND CLIENT TEST ---
   client-test:
-    # ...
+    build:
+      context: ./client
+      args:
+        ENV_FILE: .env.test
     container_name: client-test
+    restart: always
     ports:
       - "5174:80"
     networks:
       - commerce-net
 
+  # --- FRONTEND DASHBOARD PRODUCTION ---
   dashboard-prod:
-    # ...
+    build:
+      context: ./dashboard
+      args:
+        ENV_FILE: .env.prod
     container_name: dashboard-prod
+    restart: always
     ports:
       - "5175:80"
     networks:
       - commerce-net
 
+  # --- FRONTEND DASHBOARD TEST ---
   dashboard-test:
-    # ...
+    build:
+      context: ./dashboard
+      args:
+        ENV_FILE: .env.test
     container_name: dashboard-test
+    restart: always
     ports:
       - "5176:80"
     networks:
       - commerce-net
+
+networks:
+  commerce-net:
+    external: true
